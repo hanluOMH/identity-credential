@@ -62,8 +62,9 @@ class ApplicationSupportLocal(
         // This must match what is specified in application's AndroidManifest.xml
         // intent filter for app links for Android or in XCode universal link
         // properties for iOS.
-        const val APP_LINK_SERVER = "https://apps.multipaz.org"
-        const val APP_LINK_BASE_URL = "$APP_LINK_SERVER/landing/"
+        const val APP_LINK_SERVER = "multipaz-test-app"
+
+        const val APP_LINK_BASE_URL = "${APP_LINK_SERVER}://landing/"
 
         private val urlTableSpec = StorageTableSpec(
             name = "LandingUrls",

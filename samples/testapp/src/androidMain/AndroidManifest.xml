@@ -57,7 +57,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <intent-filter android:autoVerify="true">
+            <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
@@ -67,9 +67,8 @@
                 also MUST be changed in ApplicationSupportLocal class.
                  -->
                 <data
-                    android:scheme="https"
-                    android:host="apps.multipaz.org"
-                    android:pathPattern="/landing/.*"/>
+                    android:scheme="multipaz-test-app"
+                    android:host="landing"/>
             </intent-filter>
 
             <intent-filter>
