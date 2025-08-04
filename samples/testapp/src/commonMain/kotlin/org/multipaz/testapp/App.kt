@@ -105,7 +105,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
@@ -115,6 +115,8 @@ import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.multipaz.compose.prompt.PromptDialogs
 import org.multipaz.document.buildDocumentStore
+import org.multipaz.documenttype.knowntypes.IDPass
+import org.multipaz.facematch.FaceMatchLiteRtModel
 import org.multipaz.mdoc.zkp.ZkSystemRepository
 import org.multipaz.mdoc.zkp.longfellow.LongfellowZkSystem
 import org.multipaz.models.presentment.PresentmentSource
@@ -125,6 +127,7 @@ import org.multipaz.provisioning.evidence.Openid4VciCredentialOffer
 import org.multipaz.storage.base.BaseStorageTable
 import org.multipaz.storage.ephemeral.EphemeralStorage
 import org.multipaz.util.Platform
+import org.multipaz.testapp.ui.FaceMatchScreen
 import org.multipaz.testapp.ui.TrustManagerScreen
 import org.multipaz.testapp.ui.TrustPointViewerScreen
 import org.multipaz.trustmanagement.CompositeTrustManager
@@ -170,6 +173,8 @@ class App private constructor (val promptModel: PromptModel) {
     private val provisioningBackendProviderLocal = ProvisioningBackendProviderLocal()
 
     lateinit var zkSystemRepository: ZkSystemRepository
+
+    lateinit var faceMatchLiteRtModel: FaceMatchLiteRtModel
 
     private val initLock = Mutex()
     private var initialized = false
@@ -219,7 +224,8 @@ class App private constructor (val promptModel: PromptModel) {
                 Pair(::readerInit, "readerInit"),
                 Pair(::trustManagersInit, "trustManagersInit"),
                 Pair(::provisioningModelInit, "provisioningModelInit"),
-                Pair(::zkSystemRepositoryInit, "zkSystemRepositoryInit")
+                Pair(::zkSystemRepositoryInit, "zkSystemRepositoryInit"),
+                Pair(::faceMatchLiteRtModelInit, "faceMatchLiteRtModelInit")
             )
 
             val begin = Clock.System.now()
@@ -249,6 +255,7 @@ class App private constructor (val promptModel: PromptModel) {
         documentTypeRepository.addDocumentType(PhotoID.getDocumentType())
         documentTypeRepository.addDocumentType(EUPersonalID.getDocumentType())
         documentTypeRepository.addDocumentType(UtopiaMovieTicket.getDocumentType())
+        documentTypeRepository.addDocumentType(IDPass.getDocumentType())
     }
 
     private suspend fun documentStoreInit() {
@@ -336,6 +343,12 @@ class App private constructor (val promptModel: PromptModel) {
         zkSystemRepository = ZkSystemRepository().apply {
             add(longfellowSystem)
         }
+    }
+
+    @OptIn(ExperimentalResourceApi::class)
+    private suspend fun faceMatchLiteRtModelInit() {
+        val modelData = ByteString(*Res.readBytes("files/facenet_512.tflite"))
+        faceMatchLiteRtModel = FaceMatchLiteRtModel(modelData, imageSquareSize = 160, embeddingsArraySize = 512)
     }
 
     private val certsValidFrom = LocalDate.parse("2024-12-01").atStartOfDayIn(TimeZone.UTC)
@@ -810,7 +823,8 @@ class App private constructor (val promptModel: PromptModel) {
                             onClickCamera = { navController.navigate(CameraDestination.route) },
                             onClickFaceDetection = { navController.navigate(FaceDetectionDestination.route) },
                             onClickBarcodeScanning = { navController.navigate(BarcodeScanningDestination.route) },
-                            onClickSelfieCheck = { navController.navigate(SelfieCheckScreenDestination.route) }
+                            onClickSelfieCheck = { navController.navigate(SelfieCheckScreenDestination.route) },
+                            onClickFaceMatch = { navController.navigate(FaceMatchScreenDestination.route) },
                         )
                     }
                     composable(route = SettingsDestination.route) {
@@ -1082,13 +1096,19 @@ class App private constructor (val promptModel: PromptModel) {
                             showToast = { message -> showToast(message) }
                         )
                     }
-                    composable(route = BarcodeScanningDestination.route) {
-                        BarcodeScanningScreen(
+                    composable(route = FaceMatchScreenDestination.route) {
+                        FaceMatchScreen(
+                            faceMatchLiteRtModel = faceMatchLiteRtModel,
                             showToast = { message -> showToast(message) }
                         )
                     }
                     composable(route = SelfieCheckScreenDestination.route) {
                         SelfieCheckScreen(
+                            showToast = { message -> showToast(message) }
+                        )
+                    }
+                    composable(route = BarcodeScanningDestination.route) {
+                        BarcodeScanningScreen(
                             showToast = { message -> showToast(message) }
                         )
                     }
