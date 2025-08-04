@@ -214,10 +214,11 @@ private const val TAG = "credential"
 private suspend fun readSystemOfRecord(state: IssuanceState): DataItem {
     val systemOfRecordAccess = state.systemOfRecordAccess!!
     val systemOfRecordUrl = BackendEnvironment.getSystemOfRecordUrl()
-    if (systemOfRecordUrl == null) {
-        // Running without System of Record (demo/dev mode). Expect basic data encoded
-        // as fake access token
-        val (givenName, familyName, birthDate) = systemOfRecordAccess.accessToken.split(":")
+    val (givenName, familyName, birthDate) = systemOfRecordAccess.accessToken.split(":")
+//    if (systemOfRecordUrl == null && givenName.trim().equals("John", ignoreCase = true) && familyName.trim().equals("Lee", ignoreCase = true) && birthDate == "09/04/1987") {
+    if (systemOfRecordUrl == null ) {
+
+// Running without System of Record (demo/dev mode) with expected demo data
         return buildCborMap {
             putCborMap("core") {
                 put("given_name", givenName)
