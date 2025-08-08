@@ -27,8 +27,8 @@ if (HostManager.hostIsMac) {
     }
 }
 
-tasks.create<Delete>("clean") {
-    group = "build"
-
-    delete("$projectDir/build")
-}
+//tasks.create<Delete>("clean") {
+//    group = "build"
+//
+//    delete("$projectDir/build")
+//}

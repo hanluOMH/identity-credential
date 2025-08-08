@@ -18,6 +18,11 @@ import org.multipaz.storage.Storage
 import org.multipaz.testapp.platformHttpClientEngineFactory
 import org.multipaz.util.Platform
 import org.multipaz.util.fromBase64Url
+import org.multipaz.device.AssertionPoPKey
+import org.multipaz.device.AssertionBindingKeys
+import org.multipaz.securearea.KeyAttestation
+import kotlin.time.Clock
+
 import kotlin.reflect.KClass
 import kotlin.reflect.cast
 
@@ -36,6 +41,7 @@ class BackendEnvironmentLocal(
         followRedirects = false
     }
     private val applicationSupportLocal by lazy(applicationSupportProvider)
+    private val backendLocal by lazy { BackendLocal(applicationSupportLocal, deviceAssertionMaker) }
 
     override fun <T : Any> getInterface(clazz: KClass<T>): T? {
         return clazz.cast(when(clazz) {
@@ -49,6 +55,7 @@ class BackendEnvironmentLocal(
             DeviceAssertionMaker::class -> deviceAssertionMaker
             ApplicationSupport::class -> applicationSupportLocal
             RpcAuthInspector::class -> RpcAuthInspectorAssertion.Default
+            org.multipaz.provision.openid4vci.Backend::class -> backendLocal
             else -> return null
         })
     }
@@ -150,6 +157,43 @@ class BackendEnvironmentLocal(
                     """.trimIndent()
                 else -> null
             }
+        }
+    }
+
+    /**
+     * Local implementation of the Backend interface for OpenID4VCI operations
+     */
+    class BackendLocal(
+        private val applicationSupport: ApplicationSupport,
+        private val deviceAssertionMaker: DeviceAssertionMaker
+    ) : org.multipaz.provision.openid4vci.Backend {
+        
+        override suspend fun createJwtClientAssertion(tokenUrl: String): String {
+            return applicationSupport.createJwtClientAssertion(tokenUrl)
+        }
+
+        override suspend fun createJwtWalletAttestation(keyAttestation: KeyAttestation): String {
+            val deviceAssertion = deviceAssertionMaker.makeDeviceAssertion {
+                AssertionPoPKey(keyAttestation.publicKey, "https://localhost:8007")
+            }
+            return applicationSupport.createJwtClientAttestation(keyAttestation, deviceAssertion)
+        }
+
+        override suspend fun createJwtKeyAttestation(
+            keyAttestations: List<KeyAttestation>,
+            challenge: String
+        ): String {
+            val deviceAssertion = deviceAssertionMaker.makeDeviceAssertion { clientId ->
+                AssertionBindingKeys(
+                    publicKeys = keyAttestations.map { it.publicKey },
+                    nonce = ByteString(challenge.encodeToByteArray()),
+                    clientId = clientId,
+                    keyStorage = listOf(),
+                    userAuthentication = listOf(),
+                    issuedAt = Clock.System.now()
+                )
+            }
+            return applicationSupport.createJwtKeyAttestation(keyAttestations, deviceAssertion)
         }
     }
 }

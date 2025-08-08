@@ -2,6 +2,7 @@ package org.multipaz.testapp.provisioning.backend
 
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import kotlinx.io.bytestring.ByteString
 import kotlinx.io.bytestring.decodeToString
 import kotlinx.io.bytestring.encodeToByteString
@@ -23,14 +24,10 @@ class ProvisioningBackendProviderLocal: ProvisioningBackendProvider {
     private var backend: ProvisioningBackendLocal? = null
     private var applicationSupport: ApplicationSupportLocal? = null
     private var deviceAttestationId: String? = null
-    private val backendEnvironmentLocal = BackendEnvironmentLocal(
-        applicationSupportProvider = { applicationSupport!! },
-        deviceAssertionMaker = this
-    )
-    private val coroutineContext = backendEnvironmentLocal +
-            RpcAuthContext(CLIENT_ID, SESSION_ID)
-
-    override val extraCoroutineContext: CoroutineContext get() = coroutineContext
+    private var backendEnvironmentLocal: BackendEnvironmentLocal? = null
+    override val extraCoroutineContext: CoroutineContext 
+        get() = (backendEnvironmentLocal ?: throw IllegalStateException("BackendEnvironment not initialized")) +
+                RpcAuthContext(CLIENT_ID, SESSION_ID)
 
     override suspend fun getApplicationSupport(): ApplicationSupportLocal {
         init()
@@ -53,33 +50,46 @@ class ProvisioningBackendProviderLocal: ProvisioningBackendProvider {
         )
     }
 
-    private suspend fun init() {
+    suspend fun init() {
         lock.withLock {
             if (backend != null) {
                 return
             }
-            val deviceAttestationIdTable = BackendEnvironment.getTable(deviceAttestationLocalStore)
-            var deviceAttestation = RpcAuthInspectorAssertion.getClientDeviceAttestation(CLIENT_ID)
-            if (deviceAttestation != null) {
-                deviceAttestationId = deviceAttestationIdTable.get(CLIENT_ID)!!.decodeToString()
-            } else {
-                val clientTable =
-                    BackendEnvironment.getTable(RpcAuthInspectorAssertion.rpcClientTableSpec)
-                val newAttestationResult = DeviceCheck.generateAttestation(
-                    secureArea = Platform.getSecureArea(),
-                    challenge = CLIENT_ID.encodeToByteString()
-                )
-                deviceAttestation = newAttestationResult.deviceAttestation
-                deviceAttestationId = newAttestationResult.deviceAttestationId
-                clientTable.insert(
-                    key = CLIENT_ID,
-                    data = ByteString(deviceAttestation.toCbor())
-                )
-                deviceAttestationIdTable.insert(
-                    key = CLIENT_ID,
-                    data = deviceAttestationId!!.encodeToByteString()
+            // Ensure BackendEnvironment exists in coroutine context before any getTable() calls
+            if (backendEnvironmentLocal == null) {
+                backendEnvironmentLocal = BackendEnvironmentLocal(
+                    applicationSupportProvider = { applicationSupport!! },
+                    deviceAssertionMaker = this
                 )
             }
+
+            // Perform storage operations within the environment context
+            withContext(extraCoroutineContext) {
+                val deviceAttestationIdTable = BackendEnvironment.getTable(deviceAttestationLocalStore)
+                var deviceAttestation = RpcAuthInspectorAssertion.getClientDeviceAttestation(CLIENT_ID)
+                if (deviceAttestation != null) {
+                    deviceAttestationId = deviceAttestationIdTable.get(CLIENT_ID)!!.decodeToString()
+                } else {
+                    val clientTable =
+                        BackendEnvironment.getTable(RpcAuthInspectorAssertion.rpcClientTableSpec)
+                    val newAttestationResult = DeviceCheck.generateAttestation(
+                        secureArea = Platform.getSecureArea(),
+                        challenge = CLIENT_ID.encodeToByteString()
+                    )
+                    deviceAttestation = newAttestationResult.deviceAttestation
+                    deviceAttestationId = newAttestationResult.deviceAttestationId
+                    clientTable.insert(
+                        key = CLIENT_ID,
+                        data = ByteString(deviceAttestation.toCbor())
+                    )
+                    deviceAttestationIdTable.insert(
+                        key = CLIENT_ID,
+                        data = deviceAttestationId!!.encodeToByteString()
+                    )
+                }
+            }
+
+            // Now create local back-end implementations
             backend = ProvisioningBackendLocal(CLIENT_ID)
             applicationSupport = ApplicationSupportLocal(CLIENT_ID)
         }

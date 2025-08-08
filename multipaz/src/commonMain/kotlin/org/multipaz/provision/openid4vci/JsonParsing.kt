@@ -8,7 +8,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.intOrNull
 import org.multipaz.crypto.Algorithm
 
-internal open class JsonParsing(val source: String) {
+open class JsonParsing(val source: String) {
     fun wellKnown(url: String, name: String): String {
         val parsedUrl = Url(url)
         val head = parsedUrl.protocolWithAuthority

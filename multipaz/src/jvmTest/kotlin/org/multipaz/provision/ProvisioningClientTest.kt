@@ -268,7 +268,7 @@ class ProvisioningClientTest {
 
         val testClientPreferences = ClientPreferences(
             clientId = "urn:uuid:418745b8-78a3-4810-88df-7898aff3ffb4",
-            redirectUrl = "https://redirect.example.com",
+            redirectUrl = "https://apps.multipaz.org",
             locales = listOf("en-US"),
             signingAlgorithms = listOf(Algorithm.ESP256)
         )

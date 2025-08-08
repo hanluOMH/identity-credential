@@ -18,7 +18,7 @@ import org.multipaz.provision.ProvisioningMetadata
 import org.multipaz.rpc.backend.BackendEnvironment
 import org.multipaz.util.Logger
 
-internal data class IssuerConfiguration(
+data class IssuerConfiguration(
     val nonceEndpoint: String?,
     val credentialEndpoint: String,
     val provisioningMetadata: ProvisioningMetadata,

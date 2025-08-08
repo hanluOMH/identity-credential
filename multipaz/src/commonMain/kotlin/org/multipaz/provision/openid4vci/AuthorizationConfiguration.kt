@@ -10,7 +10,7 @@ import kotlinx.serialization.json.jsonObject
 import org.multipaz.crypto.Algorithm
 import org.multipaz.rpc.backend.BackendEnvironment
 
-internal data class AuthorizationConfiguration(
+data class AuthorizationConfiguration(
     val pushedAuthorizationRequestEndpoint: String,
     val authorizationEndpoint: String,
     val tokenEndpoint: String,

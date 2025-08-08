@@ -96,6 +96,7 @@ import org.multipaz.util.Logger
 import multipazproject.samples.testapp.generated.resources.Res
 import multipazproject.samples.testapp.generated.resources.back_button
 import io.ktor.http.decodeURLPart
+import io.ktor.utils.io.printStack
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -103,6 +104,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
+
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlin.time.Clock
@@ -679,27 +681,47 @@ class App private constructor (val promptModel: PromptModel) {
      * Handle a link (either a app link, universal link, or custom URL schema link).
      */
     fun handleUrl(url: String) {
-        if (url.startsWith(OID4VCI_CREDENTIAL_OFFER_URL_SCHEME)
-            || url.startsWith(HAIP_URL_SCHEME)) {
-            val queryIndex = url.indexOf('?')
-            if (queryIndex >= 0) {
-                val query = url.substring(queryIndex + 1)
-                CoroutineScope(Dispatchers.Default).launch {
-                    val offer = extractCredentialIssuerData(query)
-                    if (offer != null) {
-                        Logger.i(TAG, "Process credential offer '$query'")
-                        credentialOffers.send(offer)
-                    }
-                }
-            }
-        } else if (url.startsWith(ApplicationSupportLocal.APP_LINK_BASE_URL)) {
-            CoroutineScope(Dispatchers.Default).launch {
+        //TODO
+        CoroutineScope(Dispatchers.IO).launch {
+            // Initialize the backend provider first
+            provisioningBackendProviderLocal.init()
+            
+            // Now use the backend context for the OpenID4VCI operations
+            withContext(provisioningBackendProviderLocal.extraCoroutineContext) {
                 withContext(provisioningModel.coroutineContext) {
-                    provisioningBackendProviderLocal.getApplicationSupport()
-                        .onLandingUrlNavigated(url)
+                    OpenID4VCIEnrollment.handleDeepLink(
+                        deepLinkUrl = url,
+                        onSuccess = { list ->
+                            Logger.i(TAG, "credentials size is ${list.size}")
+                        },
+                        onError = { e ->
+                            e.printStack()
+                        }
+                    )
                 }
             }
         }
+//        if (url.startsWith(OID4VCI_CREDENTIAL_OFFER_URL_SCHEME)
+//            || url.startsWith(HAIP_URL_SCHEME)) {
+//            val queryIndex = url.indexOf('?')
+//            if (queryIndex >= 0) {
+//                val query = url.substring(queryIndex + 1)
+//                CoroutineScope(Dispatchers.Default).launch {
+//                    val offer = extractCredentialIssuerData(query)
+//                    if (offer != null) {
+//                        Logger.i(TAG, "Process credential offer '$query'")
+//                        credentialOffers.send(offer)
+//                    }
+//                }
+//            }
+//        } else if (url.startsWith(ApplicationSupportLocal.APP_LINK_BASE_URL)) {
+//            CoroutineScope(Dispatchers.Default).launch {
+//                withContext(provisioningModel.coroutineContext) {
+//                    provisioningBackendProviderLocal.getApplicationSupport()
+//                        .onLandingUrlNavigated(url)
+//                }
+//            }
+//        }
     }
 
     companion object {

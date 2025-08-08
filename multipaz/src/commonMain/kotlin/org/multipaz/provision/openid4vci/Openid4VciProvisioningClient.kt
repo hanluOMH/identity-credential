@@ -14,8 +14,8 @@ import io.ktor.http.contentType
 import io.ktor.http.encodeURLParameter
 import io.ktor.http.parameters
 import io.ktor.http.protocolWithAuthority
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.io.bytestring.ByteString
 import kotlinx.io.bytestring.encodeToByteString
 import kotlinx.serialization.json.Json
@@ -44,7 +44,7 @@ import org.multipaz.util.toBase64Url
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
 
-internal class Openid4VciProvisioningClient(
+ class Openid4VciProvisioningClient(
     val clientPreferences: ClientPreferences,
     val credentialOffer: CredentialOffer,
     val issuerConfiguration: IssuerConfiguration,

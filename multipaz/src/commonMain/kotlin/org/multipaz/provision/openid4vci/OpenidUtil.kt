@@ -4,7 +4,7 @@ import io.ktor.http.Url
 import io.ktor.http.protocolWithAuthority
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.io.bytestring.decodeToString
 import kotlinx.io.bytestring.encodeToByteString
 import kotlinx.serialization.json.JsonPrimitive
@@ -22,7 +22,7 @@ import org.multipaz.util.Logger
 import org.multipaz.util.toBase64Url
 import kotlin.random.Random
 
-internal object OpenidUtil {
+object OpenidUtil {
     const val TAG = "OpenidUtil"
 
     private val keyCreationMutex = Mutex()

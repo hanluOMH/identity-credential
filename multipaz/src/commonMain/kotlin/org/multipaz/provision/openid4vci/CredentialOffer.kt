@@ -16,7 +16,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.multipaz.util.Logger
 
-internal sealed class CredentialOffer {
+sealed class CredentialOffer {
     abstract val issuerUri: String
     abstract val configurationId: String
     abstract val authorizationServer: String?

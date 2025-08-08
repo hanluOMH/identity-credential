@@ -69,11 +69,14 @@ class ProvisioningModel(
         evidenceResponseChannel.send(evidence)
     }
 
-    private val coreCoroutineContext =
+    private val coreCoroutineContext by lazy {
         Dispatchers.Default + promptModel + provisioningBackendProvider.extraCoroutineContext
+    }
 
-    var coroutineContext: CoroutineContext = coreCoroutineContext
-        private set
+    private var _coroutineContext: CoroutineContext? = null
+    var coroutineContext: CoroutineContext
+        get() = _coroutineContext ?: coreCoroutineContext
+        private set(value) { _coroutineContext = value }
 
     /**
      * Run provisioning model.
