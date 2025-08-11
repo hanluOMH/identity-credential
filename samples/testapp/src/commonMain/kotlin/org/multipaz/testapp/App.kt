@@ -688,7 +688,7 @@ class App private constructor (val promptModel: PromptModel) {
             
             // Now use the backend context for the OpenID4VCI operations
             withContext(provisioningBackendProviderLocal.extraCoroutineContext) {
-                withContext(provisioningModel.coroutineContext) {
+//                withContext(provisioningModel.coroutineContext) {
                     OpenID4VCIEnrollment.handleDeepLink(
                         deepLinkUrl = url,
                         onSuccess = { list ->
@@ -698,7 +698,7 @@ class App private constructor (val promptModel: PromptModel) {
                             e.printStack()
                         }
                     )
-                }
+//                }
             }
         }
 //        if (url.startsWith(OID4VCI_CREDENTIAL_OFFER_URL_SCHEME)

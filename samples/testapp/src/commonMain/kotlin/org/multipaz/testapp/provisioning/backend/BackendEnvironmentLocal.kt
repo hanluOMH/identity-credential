@@ -46,15 +46,15 @@ class BackendEnvironmentLocal(
     override fun <T : Any> getInterface(clazz: KClass<T>): T? {
         return clazz.cast(when(clazz) {
             Configuration::class -> configuration
-            Resources::class -> resources
+//            Resources::class -> resources
             Storage::class -> storage
-            RpcNotifications::class -> notificationsLocal
-            RpcNotifier::class -> notificationsLocal
+//            RpcNotifications::class -> notificationsLocal
+//            RpcNotifier::class -> notificationsLocal
             HttpClient::class -> httpClient
             SecureAreaProvider::class -> SecureAreaProvider { Platform.getSecureArea() }
-            DeviceAssertionMaker::class -> deviceAssertionMaker
-            ApplicationSupport::class -> applicationSupportLocal
-            RpcAuthInspector::class -> RpcAuthInspectorAssertion.Default
+//            DeviceAssertionMaker::class -> deviceAssertionMaker
+//            ApplicationSupport::class -> applicationSupportLocal
+//            RpcAuthInspector::class -> RpcAuthInspectorAssertion.Default
             org.multipaz.provision.openid4vci.Backend::class -> backendLocal
             else -> return null
         })
