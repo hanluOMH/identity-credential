@@ -31,6 +31,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import io.ktor.client.HttpClient
 import org.multipaz.testapp.provisioning.backend.ApplicationSupportLocal
 import org.multipaz.testapp.provisioning.backend.ProvisioningBackendProviderLocal
 import org.multipaz.testapp.provisioning.backend.ProvisioningBackendProviderRemote
@@ -124,8 +125,12 @@ import org.multipaz.mdoc.zkp.longfellow.LongfellowZkSystem
 import org.multipaz.models.presentment.PresentmentSource
 import org.multipaz.models.presentment.SimplePresentmentSource
 import org.multipaz.prompt.PromptModel
+import org.multipaz.provision.openid4vci.Backend
 import org.multipaz.provisioning.WalletApplicationCapabilities
 import org.multipaz.provisioning.evidence.Openid4VciCredentialOffer
+import org.multipaz.rpc.backend.BackendEnvironment
+import org.multipaz.securearea.SecureAreaProvider
+import org.multipaz.storage.Storage
 import org.multipaz.storage.base.BaseStorageTable
 import org.multipaz.storage.ephemeral.EphemeralStorage
 import org.multipaz.util.Platform
@@ -138,8 +143,11 @@ import org.multipaz.trustmanagement.TrustManagerLocal
 import org.multipaz.trustmanagement.TrustPointAlreadyExistsException
 import org.multipaz.trustmanagement.TrustMetadata
 import org.multipaz.trustmanagement.VicalTrustManager
+import org.multipaz.util.Platform.storage
 import org.multipaz.util.fromBase64Url
 import org.multipaz.util.toHex
+import kotlin.reflect.KClass
+import kotlin.reflect.cast
 
 /**
  * Application singleton.
@@ -684,22 +692,14 @@ class App private constructor (val promptModel: PromptModel) {
         //TODO
         CoroutineScope(Dispatchers.IO).launch {
             // Initialize the backend provider first
-            provisioningBackendProviderLocal.init()
+//            provisioningBackendProviderLocal.init()
             
             // Now use the backend context for the OpenID4VCI operations
-            withContext(provisioningBackendProviderLocal.extraCoroutineContext) {
+//            withContext(provisioningBackendProviderLocal.extraCoroutineContext) {
 //                withContext(provisioningModel.coroutineContext) {
-                    OpenID4VCIEnrollment.handleDeepLink(
-                        deepLinkUrl = url,
-                        onSuccess = { list ->
-                            Logger.i(TAG, "credentials size is ${list.size}")
-                        },
-                        onError = { e ->
-                            e.printStack()
-                        }
-                    )
+                    OpenID4VCIEnrollment.handleDeepLink(url)
 //                }
-            }
+//            }
         }
 //        if (url.startsWith(OID4VCI_CREDENTIAL_OFFER_URL_SCHEME)
 //            || url.startsWith(HAIP_URL_SCHEME)) {
@@ -723,6 +723,8 @@ class App private constructor (val promptModel: PromptModel) {
 //            }
 //        }
     }
+
+
 
     companion object {
         private const val TAG = "App"

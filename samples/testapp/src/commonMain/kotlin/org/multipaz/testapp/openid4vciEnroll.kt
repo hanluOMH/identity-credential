@@ -13,10 +13,14 @@ import io.ktor.http.Url
 import io.ktor.http.parameters
 import io.ktor.http.protocolWithAuthority
 import io.ktor.http.takeFrom
+import io.ktor.util.encodeBase64
+import io.ktor.utils.io.printStack
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
 import org.multipaz.crypto.Algorithm
 import org.multipaz.provision.AuthorizationChallenge
 import org.multipaz.provision.AuthorizationResponse
@@ -30,7 +34,31 @@ import org.multipaz.securearea.CreateKeySettings
 import org.multipaz.util.Platform
 import org.multipaz.util.Logger
 import kotlinx.io.bytestring.encodeToByteString
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import org.multipaz.asn1.OID
+import org.multipaz.crypto.Crypto
+import org.multipaz.crypto.EcPrivateKey
+import org.multipaz.crypto.X509Cert
+import org.multipaz.provision.openid4vci.Backend
+import org.multipaz.securearea.KeyAttestation
+import org.multipaz.securearea.SecureArea
+import org.multipaz.securearea.SecureAreaProvider
+import org.multipaz.securearea.software.SoftwareSecureArea
+import org.multipaz.storage.Storage
+import org.multipaz.storage.ephemeral.EphemeralStorage
+import org.multipaz.util.Platform.storage
+import org.multipaz.util.toBase64Url
 import kotlin.coroutines.coroutineContext
+import kotlin.reflect.KClass
+import kotlin.reflect.cast
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * User data for OAuth form submission
@@ -41,6 +69,9 @@ data class UserData(
     val birthDate: String = "1998-09-04"
 )
 
+
+
+
 /**
  * OpenID4VCI Enrollment Function
  * 
@@ -48,9 +79,148 @@ data class UserData(
  * latest commit's Openid4VciProvisioningClient implementation.
  */
 class OpenID4VCIEnrollment {
-    
+
+    object TestBackend: Backend {
+        override suspend fun createJwtClientAssertion(tokenUrl: String): String {
+            throw IllegalStateException()
+        }
+
+        override suspend fun createJwtWalletAttestation(keyAttestation: KeyAttestation): String {
+            // Implements this draft:
+            // https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-04
+
+            val signatureAlgorithm = localAttestationPrivateKey.curve.defaultSigningAlgorithmFullySpecified
+            val head = buildJsonObject {
+                put("typ", "oauth-client-attestation+jwt")
+                put("alg", signatureAlgorithm.joseAlgorithmIdentifier)
+                put("x5c", buildJsonArray {
+                    add(localAttestationCertificate.encodedCertificate.encodeBase64())
+                })
+            }.toString().encodeToByteArray().toBase64Url()
+
+            val now = Clock.System.now()
+            val notBefore = now - 1.seconds
+            // Expiration here is only for the wallet assertion to be presented to the issuing server
+            // in the given timeframe (which happens without user interaction). It does not imply that
+            // the key becomes invalid at that point in time.
+            val expiration = now + 5.minutes
+            val payload = buildJsonObject {
+                put("iss", localClientId)
+                put("sub", testClientPreferences.clientId)
+                put("exp", expiration.epochSeconds)
+                put("cnf", buildJsonObject {
+                    put("jwk", keyAttestation.publicKey.toJwk(
+                        buildJsonObject {
+                            put("kid", JsonPrimitive(testClientPreferences.clientId))
+                        }
+                    ))
+                })
+                put("nbf", notBefore.epochSeconds)
+                put("iat", now.epochSeconds)
+                put("wallet_name", "Multipaz Wallet")
+                put("wallet_link", "https://multipaz.org")
+            }.toString().encodeToByteArray().toBase64Url()
+
+            val message = "$head.$payload"
+            val sig = Crypto.sign(
+                key = localAttestationPrivateKey,
+                signatureAlgorithm = signatureAlgorithm,
+                message = message.encodeToByteArray()
+            )
+            val signature = sig.toCoseEncoded().toBase64Url()
+
+            return "$message.$signature"
+        }
+
+        override suspend fun createJwtKeyAttestation(
+            keyAttestations: List<KeyAttestation>,
+            challenge: String
+        ): String {
+            // Generate key attestation
+            val keyList = keyAttestations.map { it.publicKey }
+
+            val alg = localAttestationPrivateKey.curve.defaultSigningAlgorithm.joseAlgorithmIdentifier
+            val head = buildJsonObject {
+                put("typ", "keyattestation+jwt")
+                put("alg", alg)
+                put("x5c", buildJsonArray {
+                    add(localAttestationCertificate.encodedCertificate.encodeBase64())
+                })
+            }.toString().encodeToByteArray().toBase64Url()
+
+            val now = Clock.System.now()
+            val notBefore = now - 1.seconds
+            val expiration = now + 5.minutes
+            val payload = buildJsonObject {
+                put("iss", localClientId)
+                put("attested_keys", JsonArray(keyList.map { it.toJwk() }))
+                put("nonce", challenge)
+                put("nbf", notBefore.epochSeconds)
+                put("exp", expiration.epochSeconds)
+                put("iat", now.epochSeconds)
+            }.toString().encodeToByteArray().toBase64Url()
+
+            val message = "$head.$payload"
+            val sig = Crypto.sign(
+                key = localAttestationPrivateKey,
+                signatureAlgorithm = localAttestationPrivateKey.curve.defaultSigningAlgorithm,
+                message = message.encodeToByteArray()
+            )
+            val signature = sig.toCoseEncoded().toBase64Url()
+
+            return "$message.$signature"
+        }
+
+        private val localAttestationCertificate = X509Cert.fromPem("""
+                -----BEGIN CERTIFICATE-----
+                MIIBxTCCAUugAwIBAgIJAOQTL9qcQopZMAoGCCqGSM49BAMDMDgxNjA0BgNVBAMT
+                LXVybjp1dWlkOjYwZjhjMTE3LWI2OTItNGRlOC04ZjdmLTYzNmZmODUyYmFhNjAe
+                Fw0yNDA5MjMyMjUxMzFaFw0zNDA5MjMyMjUxMzFaMDgxNjA0BgNVBAMTLXVybjp1
+                dWlkOjYwZjhjMTE3LWI2OTItNGRlOC04ZjdmLTYzNmZmODUyYmFhNjB2MBAGByqG
+                SM49AgEGBSuBBAAiA2IABN4D7fpNMAv4EtxyschbITpZ6iNH90rGapa6YEO/uhKn
+                C6VpPt5RUrJyhbvwAs0edCPthRfIZwfwl5GSEOS0mKGCXzWdRv4GGX/Y0m7EYypo
+                x+tzfnRTmoVX3v6OxQiapKMhMB8wHQYDVR0OBBYEFPqAK5EjiQbxFAeWt//DCaWt
+                C57aMAoGCCqGSM49BAMDA2gAMGUCMEO01fJKCy+iOTpaVp9LfO7jiXcXksn2BA22
+                reiR9ahDRdGNCrH1E3Q2umQAssSQbQIxAIz1FTHbZPcEbA5uE5lCZlRG/DQxlZhk
+                /rZrkPyXFhqEgfMnQ45IJ6f8Utlg+4Wiiw==
+                -----END CERTIFICATE-----
+            """.trimIndent()
+        )
+
+        private val localAttestationPrivateKey = EcPrivateKey.fromPem("""
+            -----BEGIN PRIVATE KEY-----
+            ME4CAQAwEAYHKoZIzj0CAQYFK4EEACIENzA1AgEBBDBn7jeRC9u9de3kOkrt9lLT
+            Pvd1hflNq1FCgs7D+qbbwz1BQa4XXU0SjsV+R1GjnAY=
+            -----END PRIVATE KEY-----
+            """.trimIndent(),
+            localAttestationCertificate.ecPublicKey
+        )
+
+        private val localClientId =
+            localAttestationCertificate.subject.components[OID.COMMON_NAME.oid]?.value
+                ?: throw IllegalStateException("No common name (CN) in certificate's subject")
+    }
+
+
+
+    object TestBackendEnvironment: BackendEnvironment {
+            override fun <T : Any> getInterface(clazz: KClass<T>): T {
+                return clazz.cast(when (clazz) {
+                    Storage::class -> storage
+                    HttpClient::class -> httpClient
+                    Backend::class -> TestBackend
+                    SecureAreaProvider::class -> secureAreaProvider
+                    else -> throw IllegalArgumentException("no such class available: ${clazz.simpleName}")
+                })
+            }
+        }
+
     companion object {
         private const val TAG = "OpenID4VCIEnrollment"
+        val storage = EphemeralStorage()
+        val secureAreaProvider = SecureAreaProvider<SecureArea>(Dispatchers.Default) {
+            SoftwareSecureArea.create(storage)
+        }
 
         val testClientPreferences = ClientPreferences(
             clientId = "urn:uuid:418745b8-78a3-4810-88df-7898aff3ffb4",
@@ -67,7 +237,9 @@ class OpenID4VCIEnrollment {
             locales = listOf("en-US"),
             signingAlgorithms = listOf(Algorithm.ESP256)
         )
-        
+
+
+
         /**
          * HTTP client for form submissions
          */
@@ -374,7 +546,20 @@ class OpenID4VCIEnrollment {
                 Logger.d(TAG, "Not an OpenID4VCI deep link: $deepLinkUrl")
             }
         }
-        
+
+       suspend fun handleDeepLink(url: String){
+           withContext(TestBackendEnvironment){
+               handleDeepLink(
+                   deepLinkUrl = url,
+                   onSuccess = { list ->
+                       Logger.i(TAG, "credentials size is ${list.size}")
+                   },
+                   onError = { e ->
+                       e.printStack()
+                   }
+               )
+           }
+        }
         /**
          * Handle QR code scan with OpenID4VCI enrollment
          * 
