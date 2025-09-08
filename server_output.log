@@ -1,0 +1,127 @@
+Type-safe project accessors is an incubating feature.
+
+> Configure project :
+warning: Dokka Gradle plugin V1 is deprecated
+    
+    Dokka Gradle plugin V1 is deprecated, and will be removed in Dokka version 2.1.0
+    Please migrate to Dokka Gradle plugin V2. This will require updating your project.
+    To learn about migrating read the migration guide https://kotl.in/dokka-gradle-migration
+    
+    To start migrating to Dokka Gradle plugin V2 add
+        org.jetbrains.dokka.experimental.gradle.pluginMode=V2EnabledWithHelpers
+    into your project's `gradle.properties` file.
+    
+    We would appreciate your feedback!
+     - Please report any feedback or problems https://kotl.in/dokka-issues
+     - Chat with the community visit #dokka in https://kotlinlang.slack.com/ (To sign up visit https://kotl.in/slack)
+    
+
+> Configure project :multipaz-models
+w: [33m[1m⚠️ Invalid Source Set Dependency Across Trees[0m[0m
+Kotlin Source Set 'androidInstrumentedTest' can't depend on 'commonTest' as they are from different Source Set Trees.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease remove this dependency edge.[0m[0m
+
+
+> Task :multipaz:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :multipaz:transformCommonMainDependenciesMetadata UP-TO-DATE
+> Task :multipaz-cbor-rpc:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :multipaz-cbor-rpc:compileKotlin UP-TO-DATE
+> Task :multipaz-cbor-rpc:compileJava NO-SOURCE
+> Task :multipaz-cbor-rpc:processResources UP-TO-DATE
+> Task :multipaz-cbor-rpc:classes UP-TO-DATE
+> Task :multipaz-cbor-rpc:jar UP-TO-DATE
+> Task :multipaz:kspCommonMainKotlinMetadata UP-TO-DATE
+> Task :multipaz:kspKotlinJvm SKIPPED
+> Task :multipaz:compileKotlinJvm UP-TO-DATE
+> Task :multipaz:compileJvmMainJava NO-SOURCE
+> Task :multipaz:jvmProcessResources NO-SOURCE
+> Task :multipaz:processJvmMainResources SKIPPED
+> Task :multipaz:jvmMainClasses UP-TO-DATE
+> Task :multipaz:jvmJar UP-TO-DATE
+> Task :multipaz-doctypes:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :multipaz-doctypes:compileKotlinJvm UP-TO-DATE
+> Task :multipaz-doctypes:compileJvmMainJava NO-SOURCE
+> Task :multipaz-doctypes:jvmProcessResources NO-SOURCE
+> Task :multipaz-doctypes:processJvmMainResources SKIPPED
+> Task :multipaz-doctypes:jvmMainClasses UP-TO-DATE
+> Task :multipaz-doctypes:jvmJar UP-TO-DATE
+> Task :multipaz-records-server:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :multipaz-records-server:kspKotlin UP-TO-DATE
+> Task :multipaz-records-server:compileKotlin UP-TO-DATE
+> Task :multipaz-records-server:compileJava NO-SOURCE
+> Task :multipaz-records-server:processResources UP-TO-DATE
+> Task :multipaz-records-server:classes UP-TO-DATE
+
+> Task :multipaz-records-server:run
+2025-09-05 16:53:01.951 [main] INFO  ktor.application - Autoreload is disabled because the development mode is off.
+2025-09-05T16:53:01.982018: ERROR: ApplicationExt: No 'admin_password' in config, generated: 'ULDxvTfSvEtBbUjGjIGs'
+2025-09-05 16:53:02.028 [main] INFO  ktor.application - Application started in 0.095 seconds.
+2025-09-05 16:53:02.029 [main] INFO  ktor.application - Application started: io.ktor.server.application.Application@13bc8645
+2025-09-05 16:53:02.141 [DefaultDispatcher-worker-2] INFO  ktor.application - Responding at http://0.0.0.0:8007
+2025-09-05 16:53:30.169 [eventLoopGroupProxy-4-2] INFO  ktor.application - 302 Found: POST - /identity/auth in 456ms -> http://localhost:8007/index.html
+2025-09-05 16:53:30.179 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: GET - /index.html in 9ms
+2025-09-05 16:53:30.189 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: GET - /list.js in 1ms
+2025-09-05 16:53:30.204 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: POST - /identity/list in 11ms
+2025-09-05 16:53:34.705 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - /person.html in 4ms
+2025-09-05 16:53:34.714 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - /person.js in 2ms
+2025-09-05 16:53:34.743 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - /identity/schema in 23ms
+2025-09-05 16:55:26.369 [eventLoopGroupProxy-4-5] INFO  ktor.application - 200 OK: POST - /identity/create in 47ms
+2025-09-05 16:55:26.423 [eventLoopGroupProxy-4-5] INFO  ktor.application - 200 OK: GET - /person.html in 2ms
+2025-09-05 16:55:26.431 [eventLoopGroupProxy-4-5] INFO  ktor.application - 200 OK: GET - /person.js in 0ms
+2025-09-05 16:55:26.435 [eventLoopGroupProxy-4-5] INFO  ktor.application - 200 OK: GET - /identity/schema in 1ms
+2025-09-05 16:55:26.451 [eventLoopGroupProxy-4-5] INFO  ktor.application - 200 OK: POST - /identity/get in 9ms
+2025-09-05 16:56:15.161 [eventLoopGroupProxy-4-7] INFO  ktor.application - 200 OK: POST - /identity/update in 20ms
+2025-09-05 16:56:16.802 [eventLoopGroupProxy-4-8] INFO  ktor.application - 200 OK: POST - /identity/update in 23ms
+2025-09-05 16:56:17.884 [eventLoopGroupProxy-4-8] INFO  ktor.application - 200 OK: POST - /identity/update in 16ms
+2025-09-05 16:56:18.298 [eventLoopGroupProxy-4-8] INFO  ktor.application - 200 OK: POST - /identity/update in 17ms
+2025-09-05 16:56:18.666 [eventLoopGroupProxy-4-8] INFO  ktor.application - 200 OK: POST - /identity/update in 23ms
+2025-09-05 16:56:19.053 [eventLoopGroupProxy-4-8] INFO  ktor.application - 200 OK: POST - /identity/update in 23ms
+2025-09-05 16:56:19.900 [eventLoopGroupProxy-4-8] INFO  ktor.application - 200 OK: POST - /identity/update in 27ms
+2025-09-05 16:56:23.908 [eventLoopGroupProxy-4-9] INFO  ktor.application - 200 OK: POST - /identity/update in 18ms
+2025-09-05 16:56:24.571 [eventLoopGroupProxy-4-9] INFO  ktor.application - 200 OK: POST - /identity/update in 16ms
+2025-09-05 16:56:24.908 [eventLoopGroupProxy-4-9] INFO  ktor.application - 200 OK: POST - /identity/update in 23ms
+2025-09-05 16:56:25.166 [eventLoopGroupProxy-4-9] INFO  ktor.application - 200 OK: POST - /identity/update in 24ms
+2025-09-05 16:56:27.540 [eventLoopGroupProxy-4-10] INFO  ktor.application - 200 OK: GET - /person.html in 4ms
+2025-09-05 16:56:27.559 [eventLoopGroupProxy-4-10] INFO  ktor.application - 200 OK: GET - /person.js in 2ms
+2025-09-05 16:56:27.574 [eventLoopGroupProxy-4-10] INFO  ktor.application - 200 OK: GET - /identity/schema in 7ms
+2025-09-05 16:56:38.993 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: POST - /identity/create in 21ms
+2025-09-05 16:56:39.011 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: GET - /person.html in 1ms
+2025-09-05 16:56:39.018 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: GET - /person.js in 0ms
+2025-09-05 16:56:39.025 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: GET - /identity/schema in 2ms
+2025-09-05 16:56:39.035 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: POST - /identity/get in 7ms
+2025-09-05 16:56:39.943 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: POST - /identity/update in 23ms
+2025-09-05 16:56:43.496 [eventLoopGroupProxy-4-4] INFO  ktor.application - 200 OK: GET - /index.html in 4ms
+2025-09-05 16:56:43.506 [eventLoopGroupProxy-4-4] INFO  ktor.application - 200 OK: GET - /list.js in 1ms
+2025-09-05 16:56:43.514 [eventLoopGroupProxy-4-4] INFO  ktor.application - 200 OK: POST - /identity/list in 3ms
+2025-09-05 16:56:43.523 [eventLoopGroupProxy-4-4] INFO  ktor.application - 200 OK: POST - /identity/get in 5ms
+2025-09-05 16:56:43.523 [eventLoopGroupProxy-4-5] INFO  ktor.application - 200 OK: POST - /identity/get in 3ms
+2025-09-05 16:56:48.208 [eventLoopGroupProxy-4-6] INFO  ktor.application - 200 OK: GET - /person.html in 2ms
+2025-09-05 16:56:48.217 [eventLoopGroupProxy-4-6] INFO  ktor.application - 200 OK: GET - /person.js in 0ms
+2025-09-05 16:56:48.241 [eventLoopGroupProxy-4-6] INFO  ktor.application - 200 OK: GET - /identity/schema in 6ms
+2025-09-05 16:56:48.269 [eventLoopGroupProxy-4-6] INFO  ktor.application - 200 OK: POST - /identity/get in 19ms
+2025-09-05 16:56:52.749 [eventLoopGroupProxy-4-8] INFO  ktor.application - 200 OK: GET - /person.html in 4ms
+2025-09-05 16:56:52.765 [eventLoopGroupProxy-4-8] INFO  ktor.application - 200 OK: GET - /person.js in 1ms
+2025-09-05 16:56:52.782 [eventLoopGroupProxy-4-8] INFO  ktor.application - 200 OK: GET - /identity/schema in 3ms
+2025-09-05 16:56:52.798 [eventLoopGroupProxy-4-8] INFO  ktor.application - 200 OK: POST - /identity/get in 8ms
+2025-09-05 16:56:56.142 [eventLoopGroupProxy-4-10] INFO  ktor.application - 200 OK: GET - /person.html in 2ms
+2025-09-05 16:56:56.158 [eventLoopGroupProxy-4-10] INFO  ktor.application - 200 OK: GET - /person.js in 3ms
+2025-09-05 16:56:56.175 [eventLoopGroupProxy-4-10] INFO  ktor.application - 200 OK: GET - /identity/schema in 2ms
+2025-09-05 16:56:56.192 [eventLoopGroupProxy-4-10] INFO  ktor.application - 200 OK: POST - /identity/get in 6ms
+2025-09-05 16:57:06.026 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: POST - /identity/update in 19ms
+2025-09-05 16:57:07.011 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: POST - /identity/update in 21ms
+2025-09-05 16:57:07.611 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: POST - /identity/update in 18ms
+2025-09-05 16:57:08.106 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: POST - /identity/update in 24ms
+2025-09-05 16:57:10.874 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - /index.html in 2ms
+2025-09-05 16:57:10.884 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - /list.js in 1ms
+2025-09-05 16:57:10.892 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: POST - /identity/list in 2ms
+2025-09-05 16:57:10.904 [eventLoopGroupProxy-4-4] INFO  ktor.application - 200 OK: POST - /identity/get in 9ms
+2025-09-05 16:57:10.904 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: POST - /identity/get in 9ms
+2025-09-05 16:58:16.256 [eventLoopGroupProxy-4-5] INFO  ktor.application - 404 Not Found: GET - /issuer in 21ms
+2025-09-05 16:58:37.166 [eventLoopGroupProxy-4-7] INFO  ktor.application - 200 OK: GET - /person.html in 2ms
+2025-09-05 16:58:37.182 [eventLoopGroupProxy-4-7] INFO  ktor.application - 200 OK: GET - /person.js in 1ms
+2025-09-05 16:58:37.199 [eventLoopGroupProxy-4-7] INFO  ktor.application - 200 OK: GET - /identity/schema in 5ms
+2025-09-05 17:00:39.230 [eventLoopGroupProxy-4-10] INFO  ktor.application - 404 Not Found: GET - /credential in 13ms
+2025-09-05 17:00:42.185 [eventLoopGroupProxy-4-2] INFO  ktor.application - 404 Not Found: GET - /credential in 3ms
+2025-09-05 17:03:54.508 [eventLoopGroupProxy-4-4] INFO  ktor.application - 302 Found: GET - / in 42ms -> http://localhost:8007/login.html
+2025-09-05 17:03:54.562 [eventLoopGroupProxy-4-4] INFO  ktor.application - 200 OK: GET - /login.html in 41ms

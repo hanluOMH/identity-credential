@@ -1,0 +1,68 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 45114d57..e0d6e57a 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -5,11 +5,31 @@ All notable changes to this project will be documented in this file.
+ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+ 
+-## [0.93.0] - Not yet released, expected end of July 2025
+-- TODO: add items as needed
++## [0.94.0] - Expected Aug 2025
++Changes since Multipaz 0.93.0 include:
++
++## [0.93.0] - 2025-08-04
++Changes since Multipaz 0.92.1 include:
++- TrustManager rearchitecture to better support applications allowing
++  the user to add/remove/edit entries, e.g. [Multipaz Identity Reader](https://apps.multipaz.org).
++- W3C Digital Credential improvements on Android to include the Exchange Protocol, as required.
++- Make DeviceRequestGenerator work with keys in a `SecureArea`.
++- New system-of-record server and OpenID4VCI interoperability fixes.
++- Allow scanning NFC without a dialog, for platforms that support it (e.g. Android).
++- Support for [Longfellow ZK](https://github.com/google/longfellow-zk) and new ZKP plumbing in
++  latest [ISO/IEC 18013-5 Second Edition drafts](https://github.com/ISOWG10/ISO-18013).
++- OpenID4VP 1.0 support using URI schemes.
++- Support requests with multiple protocols in W3C DC API in verifier.multipaz.org and properly
++  handle it in Multipaz Test App.
++- Unit tests for Android Credential Manager Matcher.
++- Face matching support in multipaz-vision, using [LiteRT](https://ai.google.dev/edge/litert)
++  and [FaceNet](https://en.wikipedia.org/wiki/FaceNet).
++- Update of all dependencies to latest version, including kotlinx-datetime 0.7.1 which includes
++  the migration of `Instant` and `Clock` from `kotlinx.datetime` to `kotlin.time`.
++- Bug fixes and other enhancements.
+ 
+ ## [0.92.1] - 2025-06-27
+-Changes since Multipaz 0.92.1 include
++Changes since Multipaz 0.92.1 include:
+ - Fix BLE GATT on older Android devices.
+ - Pass the full JWS for OpenID4VCI key attestations, not just the body of the JWT.
+ 
+diff --git a/Package.swift b/Package.swift
+index 10bde4b5..056b8cb7 100644
+--- a/Package.swift
++++ b/Package.swift
+@@ -12,7 +12,7 @@ let package = Package(
+    targets: [
+       .binaryTarget(
+          name: "Multipaz",
+-         url: "https://apps.multipaz.org/xcf/Multipaz-0.93.0-pre.35.ffb1f3df.xcframework.zip",
+-         checksum:"1f578fdd49ad6de39e5f5077a684fe2008927836ca5aac4dfe8fd365ec6ec4e3")
++         url: "https://apps.multipaz.org/xcf/Multipaz-0.93.0.xcframework.zip",
++         checksum:"30de379d3d4e8a59cd3a72eac698995837814356515ad2bb037986f05333ec8d")
+    ]
+ )
+diff --git a/build.gradle.kts b/build.gradle.kts
+index 78ac5add..171537d9 100644
+--- a/build.gradle.kts
++++ b/build.gradle.kts
+@@ -16,8 +16,8 @@ val projectVersionCode: Int by extra {
+ // For a tagged release, projectVersionNext should be blank and the next commit
+ // following the release should bump it to the next version number.
+ //
+-val projectVersionLast = "0.92.1"
+-val projectVersionNext = "0.93.0"
++val projectVersionLast = "0.93.0"
++val projectVersionNext = "0.94.0"
+ 
+ private fun runCommand(args: List<String>): String {
+     val stdout = ByteArrayOutputStream()

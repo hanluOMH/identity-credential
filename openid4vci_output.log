@@ -1,0 +1,223 @@
+Type-safe project accessors is an incubating feature.
+
+> Configure project :
+warning: Dokka Gradle plugin V1 is deprecated
+    
+    Dokka Gradle plugin V1 is deprecated, and will be removed in Dokka version 2.1.0
+    Please migrate to Dokka Gradle plugin V2. This will require updating your project.
+    To learn about migrating read the migration guide https://kotl.in/dokka-gradle-migration
+    
+    To start migrating to Dokka Gradle plugin V2 add
+        org.jetbrains.dokka.experimental.gradle.pluginMode=V2EnabledWithHelpers
+    into your project's `gradle.properties` file.
+    
+    We would appreciate your feedback!
+     - Please report any feedback or problems https://kotl.in/dokka-issues
+     - Chat with the community visit #dokka in https://kotlinlang.slack.com/ (To sign up visit https://kotl.in/slack)
+    
+
+> Configure project :multipaz-models
+w: [33m[1m⚠️ Invalid Source Set Dependency Across Trees[0m[0m
+Kotlin Source Set 'androidInstrumentedTest' can't depend on 'commonTest' as they are from different Source Set Trees.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease remove this dependency edge.[0m[0m
+
+
+> Task :multipaz:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :multipaz:transformCommonMainDependenciesMetadata UP-TO-DATE
+> Task :multipaz-cbor-rpc:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :multipaz-cbor-rpc:compileKotlin UP-TO-DATE
+> Task :multipaz-cbor-rpc:compileJava NO-SOURCE
+> Task :multipaz-cbor-rpc:processResources UP-TO-DATE
+> Task :multipaz-cbor-rpc:classes UP-TO-DATE
+> Task :multipaz-cbor-rpc:jar UP-TO-DATE
+> Task :multipaz:kspCommonMainKotlinMetadata UP-TO-DATE
+> Task :multipaz:kspKotlinJvm SKIPPED
+> Task :multipaz:compileKotlinJvm UP-TO-DATE
+> Task :multipaz:compileJvmMainJava NO-SOURCE
+> Task :multipaz:jvmProcessResources NO-SOURCE
+> Task :multipaz:processJvmMainResources SKIPPED
+> Task :multipaz:jvmMainClasses UP-TO-DATE
+> Task :multipaz:jvmJar UP-TO-DATE
+> Task :multipaz-doctypes:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :multipaz-doctypes:compileKotlinJvm UP-TO-DATE
+> Task :multipaz-doctypes:compileJvmMainJava NO-SOURCE
+> Task :multipaz-doctypes:jvmProcessResources NO-SOURCE
+> Task :multipaz-doctypes:processJvmMainResources SKIPPED
+> Task :multipaz-doctypes:jvmMainClasses UP-TO-DATE
+> Task :multipaz-doctypes:jvmJar UP-TO-DATE
+> Task :multipaz-openid4vci-server:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :multipaz-openid4vci-server:kspKotlin
+> Task :multipaz-openid4vci-server:processResources
+> Task :multipaz-openid4vci-server:compileKotlin
+> Task :multipaz-openid4vci-server:compileJava NO-SOURCE
+> Task :multipaz-openid4vci-server:classes
+
+> Task :multipaz-openid4vci-server:run
+2025-09-05 17:00:01.221 [main] INFO  ktor.application - Autoreload is disabled because the development mode is off.
+2025-09-05 17:00:01.267 [main] INFO  ktor.application - Application started in 0.065 seconds.
+2025-09-05 17:00:01.268 [main] INFO  ktor.application - Application started: io.ktor.server.application.Application@69e153c5
+2025-09-05 17:00:01.449 [DefaultDispatcher-worker-1] INFO  ktor.application - Responding at http://0.0.0.0:8008
+2025-09-05 17:00:33.992 [eventLoopGroupProxy-4-2] INFO  ktor.application - 404 Not Found: GET - /credential in 182ms
+2025-09-05 17:00:33.994 [eventLoopGroupProxy-4-2] INFO  ktor.application - 404 Not Found: GET - /favicon.ico in 0ms
+2025-09-05 17:01:43.736 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - / in 22ms
+2025-09-05 17:01:43.752 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - /style.css in 3ms
+2025-09-05 17:01:43.753 [eventLoopGroupProxy-4-4] INFO  ktor.application - 200 OK: GET - /display_metadata.js in 3ms
+2025-09-05 17:01:43.924 [eventLoopGroupProxy-4-4] INFO  ktor.application - 200 OK: GET - /.well-known/openid-credential-issuer in 162ms
+2025-09-05 17:01:43.928 [eventLoopGroupProxy-4-4] INFO  ktor.application - 200 OK: GET - /logo.png in 2ms
+2025-09-05 17:01:43.928 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - /card-mdl.png in 1ms
+2025-09-05 17:01:43.929 [eventLoopGroupProxy-4-6] INFO  ktor.application - 200 OK: GET - /movie_ticket.png in 2ms
+2025-09-05 17:01:43.929 [eventLoopGroupProxy-4-5] INFO  ktor.application - 200 OK: GET - /card-pid.png in 1ms
+2025-09-05 17:01:43.930 [eventLoopGroupProxy-4-7] INFO  ktor.application - 200 OK: GET - /naturalization.png in 2ms
+2025-09-05 17:02:21.291 [eventLoopGroupProxy-4-8] INFO  ktor.application - 200 OK: GET - / in 1ms
+2025-09-05 17:02:21.380 [eventLoopGroupProxy-4-8] INFO  ktor.application - 200 OK: GET - /style.css in 1ms
+2025-09-05 17:02:21.380 [eventLoopGroupProxy-4-9] INFO  ktor.application - 200 OK: GET - /display_metadata.js in 1ms
+2025-09-05 17:02:21.401 [eventLoopGroupProxy-4-9] INFO  ktor.application - 200 OK: GET - /.well-known/openid-credential-issuer in 1ms
+2025-09-05 17:02:21.410 [eventLoopGroupProxy-4-8] INFO  ktor.application - 404 Not Found: GET - /favicon.ico in 1ms
+2025-09-05 17:02:21.411 [eventLoopGroupProxy-4-9] INFO  ktor.application - 200 OK: GET - /logo.png in 0ms
+2025-09-05 17:02:21.420 [eventLoopGroupProxy-4-10] INFO  ktor.application - 200 OK: GET - /card-mdl.png in 0ms
+2025-09-05 17:02:21.420 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: GET - /naturalization.png in 0ms
+2025-09-05 17:02:21.420 [eventLoopGroupProxy-4-1] INFO  ktor.application - 200 OK: GET - /card-pid.png in 0ms
+2025-09-05 17:02:21.421 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - /movie_ticket.png in 0ms
+2025-09-05 17:02:22.689 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: GET - / in 1ms
+2025-09-05 17:02:22.713 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: GET - /style.css in 0ms
+2025-09-05 17:02:22.714 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - /display_metadata.js in 1ms
+2025-09-05 17:02:22.729 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - /.well-known/openid-credential-issuer in 1ms
+2025-09-05 17:02:22.739 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - /logo.png in 1ms
+2025-09-05 17:02:22.739 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: GET - /card-mdl.png in 1ms
+2025-09-05 17:02:22.890 [eventLoopGroupProxy-4-1] INFO  ktor.application - 200 OK: GET - /qr in 150ms
+2025-09-05 17:03:32.067 [eventLoopGroupProxy-4-4] INFO  ktor.application - 200 OK: GET - /.well-known/openid-credential-issuer in 2ms
+2025-09-05 17:03:32.105 [eventLoopGroupProxy-4-4] INFO  ktor.application - 200 OK: GET - /card-mdl.png in 0ms
+2025-09-05 17:03:32.136 [eventLoopGroupProxy-4-4] INFO  ktor.application - 200 OK: GET - /card-pid.png in 0ms
+2025-09-05 17:03:32.167 [eventLoopGroupProxy-4-4] INFO  ktor.application - 200 OK: GET - /naturalization.png in 1ms
+2025-09-05 17:03:32.229 [eventLoopGroupProxy-4-4] INFO  ktor.application - 200 OK: GET - /movie_ticket.png in 1ms
+2025-09-05 17:03:32.265 [eventLoopGroupProxy-4-4] INFO  ktor.application - 200 OK: GET - /logo.png in 1ms
+2025-09-05 17:03:32.286 [eventLoopGroupProxy-4-4] INFO  ktor.application - 200 OK: GET - /.well-known/oauth-authorization-server in 8ms
+2025-09-05 17:03:32.800 [eventLoopGroupProxy-4-4] INFO  ktor.application - 201 Created: POST - /par in 296ms
+2025-09-05 17:03:32.931 [eventLoopGroupProxy-4-1] INFO  ktor.application - 200 OK: GET - /authorize in 7ms
+2025-09-05 17:03:33.004 [eventLoopGroupProxy-4-1] INFO  ktor.application - 200 OK: GET - /style.css in 0ms
+2025-09-05 17:03:33.006 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: GET - /authorize.js in 1ms
+2025-09-05T17:03:33.057894: WARNING: X509Cert: Truncating fractional seconds of validFrom
+2025-09-05T17:03:33.074735: WARNING: X509Cert: Truncating fractional seconds of validUntil
+2025-09-05T17:03:33.095628: WARNING: X509Cert: Truncating fractional seconds of validFrom
+2025-09-05T17:03:33.095754: WARNING: X509Cert: Truncating fractional seconds of validUntil
+2025-09-05 17:03:33.106 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: POST - /credential_request in 75ms
+2025-09-05 17:03:42.989 [eventLoopGroupProxy-4-2] INFO  ktor.application - 302 Found: POST - /authorize in 27ms -> finish_authorization?issuer_state=Kvoz6B5jD3dx-SkjZ4yCSoBAToUYdBRlYCmhZqo8J03wzeJoEtGbo-PlEfgAeFhhKUJ4
+2025-09-05 17:03:43.012 [eventLoopGroupProxy-4-2] INFO  ktor.application - 302 Found: GET - /finish_authorization in 7ms -> https://apps.multipaz.org/landing/?code=yJS3MEQsqhNECYhCGvtcc7n86HZ9kXz2C6Vedx8o1a_Fq0In6kJ34RChou5zS_azCwah&iss=http%3A%2F%2Flocalhost%3A8008&state=A16d8LokqJk90qJAmL3e
+2025-09-05 17:03:58.575 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: GET - / in 2ms
+2025-09-05 17:03:58.683 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: GET - /style.css in 0ms
+2025-09-05 17:03:58.683 [eventLoopGroupProxy-4-1] INFO  ktor.application - 200 OK: GET - /display_metadata.js in 0ms
+2025-09-05 17:03:58.703 [eventLoopGroupProxy-4-1] INFO  ktor.application - 200 OK: GET - /.well-known/openid-credential-issuer in 1ms
+2025-09-05 17:03:58.712 [eventLoopGroupProxy-4-1] INFO  ktor.application - 200 OK: GET - /logo.png in 0ms
+2025-09-05 17:03:58.717 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: GET - /card-mdl.png in 0ms
+2025-09-05 17:03:58.718 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - /card-pid.png in 0ms
+2025-09-05 17:03:58.720 [eventLoopGroupProxy-4-10] INFO  ktor.application - 200 OK: GET - /naturalization.png in 1ms
+2025-09-05 17:03:58.720 [eventLoopGroupProxy-4-9] INFO  ktor.application - 200 OK: GET - /movie_ticket.png in 0ms
+2025-09-05 17:03:59.938 [eventLoopGroupProxy-4-10] INFO  ktor.application - 200 OK: GET - / in 0ms
+2025-09-05 17:03:59.959 [eventLoopGroupProxy-4-10] INFO  ktor.application - 200 OK: GET - /style.css in 1ms
+2025-09-05 17:03:59.963 [eventLoopGroupProxy-4-9] INFO  ktor.application - 200 OK: GET - /display_metadata.js in 0ms
+2025-09-05 17:03:59.975 [eventLoopGroupProxy-4-9] INFO  ktor.application - 200 OK: GET - /.well-known/openid-credential-issuer in 0ms
+2025-09-05 17:03:59.984 [eventLoopGroupProxy-4-9] INFO  ktor.application - 200 OK: GET - /logo.png in 0ms
+2025-09-05 17:03:59.985 [eventLoopGroupProxy-4-10] INFO  ktor.application - 200 OK: GET - /card-mdl.png in 1ms
+2025-09-05 17:04:00.025 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - /qr in 40ms
+2025-09-05 17:04:03.671 [eventLoopGroupProxy-4-5] INFO  ktor.application - 200 OK: GET - /.well-known/openid-credential-issuer in 0ms
+2025-09-05 17:04:03.692 [eventLoopGroupProxy-4-5] INFO  ktor.application - 200 OK: GET - /card-mdl.png in 1ms
+2025-09-05 17:04:03.716 [eventLoopGroupProxy-4-5] INFO  ktor.application - 200 OK: GET - /card-pid.png in 1ms
+2025-09-05 17:04:03.739 [eventLoopGroupProxy-4-5] INFO  ktor.application - 200 OK: GET - /naturalization.png in 1ms
+2025-09-05 17:04:03.811 [eventLoopGroupProxy-4-5] INFO  ktor.application - 200 OK: GET - /movie_ticket.png in 1ms
+2025-09-05 17:04:03.842 [eventLoopGroupProxy-4-5] INFO  ktor.application - 200 OK: GET - /logo.png in 3ms
+2025-09-05 17:04:03.865 [eventLoopGroupProxy-4-5] INFO  ktor.application - 200 OK: GET - /.well-known/oauth-authorization-server in 3ms
+2025-09-05 17:04:03.986 [eventLoopGroupProxy-4-5] INFO  ktor.application - 201 Created: POST - /par in 13ms
+2025-09-05 17:04:04.111 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - /authorize in 3ms
+2025-09-05 17:04:04.186 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - /style.css in 0ms
+2025-09-05 17:04:04.188 [eventLoopGroupProxy-4-10] INFO  ktor.application - 200 OK: GET - /authorize.js in 1ms
+2025-09-05T17:04:04.205816: WARNING: X509Cert: Truncating fractional seconds of validFrom
+2025-09-05T17:04:04.205974: WARNING: X509Cert: Truncating fractional seconds of validUntil
+2025-09-05 17:04:04.214 [eventLoopGroupProxy-4-10] INFO  ktor.application - 200 OK: POST - /credential_request in 13ms
+2025-09-05 17:04:06.075 [eventLoopGroupProxy-4-10] INFO  ktor.application - 302 Found: POST - /authorize in 6ms -> finish_authorization?issuer_state=iKqYHt0yLF5wJrwbWKHH54023aiwuZqYvEIpJO4UQMvjRfgIrJKuMfFTFitBKB-_Qywe
+2025-09-05 17:04:06.099 [eventLoopGroupProxy-4-10] INFO  ktor.application - 302 Found: GET - /finish_authorization in 3ms -> https://apps.multipaz.org/landing/?code=aH5X5cp52lIEVeGQqKDIo-DusROy0SaEDZ1xsyN9XOyOedYB2S445GBhyoFTmNQ_P9Sb&iss=http%3A%2F%2Flocalhost%3A8008&state=hVDY0m9UQcALj1DmQOjU
+2025-09-05 17:06:56.487 [eventLoopGroupProxy-4-6] INFO  ktor.application - 200 OK: GET - /.well-known/openid-credential-issuer in 2ms
+2025-09-05 17:06:56.506 [eventLoopGroupProxy-4-6] INFO  ktor.application - 200 OK: GET - /card-mdl.png in 1ms
+2025-09-05 17:06:56.529 [eventLoopGroupProxy-4-6] INFO  ktor.application - 200 OK: GET - /card-pid.png in 1ms
+2025-09-05 17:06:56.560 [eventLoopGroupProxy-4-6] INFO  ktor.application - 200 OK: GET - /naturalization.png in 0ms
+2025-09-05 17:06:56.623 [eventLoopGroupProxy-4-6] INFO  ktor.application - 200 OK: GET - /movie_ticket.png in 1ms
+2025-09-05 17:06:56.652 [eventLoopGroupProxy-4-6] INFO  ktor.application - 200 OK: GET - /logo.png in 1ms
+2025-09-05 17:06:56.680 [eventLoopGroupProxy-4-6] INFO  ktor.application - 200 OK: GET - /.well-known/oauth-authorization-server in 2ms
+2025-09-05 17:06:56.866 [eventLoopGroupProxy-4-6] INFO  ktor.application - 201 Created: POST - /par in 47ms
+2025-09-05 17:06:56.992 [eventLoopGroupProxy-4-10] INFO  ktor.application - 200 OK: GET - /authorize in 2ms
+2025-09-05 17:06:57.055 [eventLoopGroupProxy-4-10] INFO  ktor.application - 200 OK: GET - /style.css in 0ms
+2025-09-05 17:06:57.058 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - /authorize.js in 1ms
+2025-09-05T17:06:57.080108: WARNING: X509Cert: Truncating fractional seconds of validFrom
+2025-09-05T17:06:57.08037: WARNING: X509Cert: Truncating fractional seconds of validUntil
+2025-09-05 17:06:57.087 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: POST - /credential_request in 14ms
+2025-09-05 17:06:59.010 [eventLoopGroupProxy-4-3] INFO  ktor.application - 302 Found: POST - /authorize in 3ms -> finish_authorization?issuer_state=P9Zf07ThZw31DllDmrIBITsaqpqcIc215r80OQlG5vDjJlQvxPad6fxx1emwZtTZnW4t
+2025-09-05 17:06:59.026 [eventLoopGroupProxy-4-3] INFO  ktor.application - 302 Found: GET - /finish_authorization in 1ms -> https://apps.multipaz.org/landing/?code=Y1g7OPwKeAYgCXLRP2YbCU2GcNh50V94oIMrsexhuSTZzTGAui4okz58S9u1JVVA9OTn&iss=http%3A%2F%2Flocalhost%3A8008&state=5sAn7MTaXFS5EOw5BwDR
+2025-09-05 17:07:51.884 [eventLoopGroupProxy-4-7] INFO  ktor.application - 200 OK: GET - / in 2ms
+2025-09-05 17:07:51.906 [eventLoopGroupProxy-4-7] INFO  ktor.application - 200 OK: GET - /style.css in 0ms
+2025-09-05 17:07:51.907 [eventLoopGroupProxy-4-8] INFO  ktor.application - 200 OK: GET - /display_metadata.js in 1ms
+2025-09-05 17:07:51.930 [eventLoopGroupProxy-4-8] INFO  ktor.application - 200 OK: GET - /.well-known/openid-credential-issuer in 2ms
+2025-09-05 17:07:51.940 [eventLoopGroupProxy-4-8] INFO  ktor.application - 200 OK: GET - /logo.png in 1ms
+2025-09-05 17:07:51.942 [eventLoopGroupProxy-4-7] INFO  ktor.application - 200 OK: GET - /card-mdl.png in 0ms
+2025-09-05 17:07:51.954 [eventLoopGroupProxy-4-9] INFO  ktor.application - 200 OK: GET - /qr in 10ms
+2025-09-05 17:08:02.727 [eventLoopGroupProxy-4-9] INFO  ktor.application - 200 OK: GET - / in 1ms
+2025-09-05 17:08:02.764 [eventLoopGroupProxy-4-9] INFO  ktor.application - 200 OK: GET - /style.css in 1ms
+2025-09-05 17:08:02.766 [eventLoopGroupProxy-4-7] INFO  ktor.application - 200 OK: GET - /display_metadata.js in 1ms
+2025-09-05 17:08:02.785 [eventLoopGroupProxy-4-7] INFO  ktor.application - 200 OK: GET - /.well-known/openid-credential-issuer in 1ms
+2025-09-05 17:08:02.798 [eventLoopGroupProxy-4-7] INFO  ktor.application - 200 OK: GET - /logo.png in 0ms
+2025-09-05 17:08:02.801 [eventLoopGroupProxy-4-9] INFO  ktor.application - 200 OK: GET - /card-mdl.png in 0ms
+2025-09-05 17:08:02.813 [eventLoopGroupProxy-4-8] INFO  ktor.application - 200 OK: GET - /qr in 11ms
+2025-09-05 17:08:21.339 [eventLoopGroupProxy-4-10] INFO  ktor.application - 404 Not Found: GET - /issuer in 4ms
+2025-09-05 17:08:37.347 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: GET - / in 1ms
+2025-09-05 17:08:37.352 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - /display_metadata.js in 0ms
+2025-09-05 17:08:37.352 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: GET - /style.css in 0ms
+2025-09-05 17:08:37.359 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - /.well-known/openid-credential-issuer in 2ms
+2025-09-05 17:08:37.362 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - /logo.png in 0ms
+2025-09-05 17:08:37.363 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: GET - /card-mdl.png in 1ms
+2025-09-05 17:08:37.363 [eventLoopGroupProxy-4-4] INFO  ktor.application - 200 OK: GET - /card-pid.png in 1ms
+2025-09-05 17:08:37.363 [eventLoopGroupProxy-4-6] INFO  ktor.application - 200 OK: GET - /movie_ticket.png in 1ms
+2025-09-05 17:08:37.365 [eventLoopGroupProxy-4-5] INFO  ktor.application - 200 OK: GET - /naturalization.png in 0ms
+2025-09-05 17:08:47.264 [eventLoopGroupProxy-4-7] INFO  ktor.application - 200 OK: GET - /.well-known/openid-credential-issuer in 0ms
+2025-09-05 17:08:47.285 [eventLoopGroupProxy-4-7] INFO  ktor.application - 200 OK: GET - /card-mdl.png in 0ms
+2025-09-05 17:08:47.309 [eventLoopGroupProxy-4-7] INFO  ktor.application - 200 OK: GET - /card-pid.png in 0ms
+2025-09-05 17:08:47.339 [eventLoopGroupProxy-4-7] INFO  ktor.application - 200 OK: GET - /naturalization.png in 0ms
+2025-09-05 17:08:47.433 [eventLoopGroupProxy-4-7] INFO  ktor.application - 200 OK: GET - /movie_ticket.png in 1ms
+2025-09-05 17:08:47.464 [eventLoopGroupProxy-4-7] INFO  ktor.application - 200 OK: GET - /logo.png in 0ms
+2025-09-05 17:08:47.477 [eventLoopGroupProxy-4-7] INFO  ktor.application - 200 OK: GET - /.well-known/oauth-authorization-server in 1ms
+2025-09-05 17:08:47.568 [eventLoopGroupProxy-4-7] INFO  ktor.application - 201 Created: POST - /par in 14ms
+2025-09-05 17:08:47.665 [eventLoopGroupProxy-4-8] INFO  ktor.application - 200 OK: GET - /authorize in 7ms
+2025-09-05 17:08:47.764 [eventLoopGroupProxy-4-8] INFO  ktor.application - 200 OK: GET - /style.css in 1ms
+2025-09-05 17:08:47.764 [eventLoopGroupProxy-4-9] INFO  ktor.application - 200 OK: GET - /authorize.js in 0ms
+2025-09-05T17:08:47.79751: WARNING: X509Cert: Truncating fractional seconds of validFrom
+2025-09-05T17:08:47.797666: WARNING: X509Cert: Truncating fractional seconds of validUntil
+2025-09-05 17:08:47.802 [eventLoopGroupProxy-4-9] INFO  ktor.application - 200 OK: POST - /credential_request in 10ms
+2025-09-05 17:08:49.083 [eventLoopGroupProxy-4-9] INFO  ktor.application - 302 Found: POST - /authorize in 3ms -> finish_authorization?issuer_state=FngW2ccTzMqqNWYX0DDqfzwbM9XPSZsXQk1EjdQSat4qFP3x_kMS5qU4uZxtjhCuuwLU
+2025-09-05 17:08:49.098 [eventLoopGroupProxy-4-9] INFO  ktor.application - 302 Found: GET - /finish_authorization in 3ms -> https://apps.multipaz.org/landing/?code=j5iBNIPdaz8fY-5YvTqnZeynNoIOYQGFHtX85Wrjua2DHCMJeJtHoqS1GAbNDi8KJgkE&iss=http%3A%2F%2Flocalhost%3A8008&state=ryyomXYA5aHTBRgZ01db
+2025-09-05 17:09:06.241 [eventLoopGroupProxy-4-10] INFO  ktor.application - 200 OK: GET - / in 0ms
+2025-09-05 17:09:06.264 [eventLoopGroupProxy-4-10] INFO  ktor.application - 200 OK: GET - /style.css in 1ms
+2025-09-05 17:09:06.265 [eventLoopGroupProxy-4-1] INFO  ktor.application - 200 OK: GET - /display_metadata.js in 0ms
+2025-09-05 17:09:06.285 [eventLoopGroupProxy-4-1] INFO  ktor.application - 200 OK: GET - /.well-known/openid-credential-issuer in 1ms
+2025-09-05 17:09:06.298 [eventLoopGroupProxy-4-1] INFO  ktor.application - 200 OK: GET - /logo.png in 0ms
+2025-09-05 17:09:06.302 [eventLoopGroupProxy-4-10] INFO  ktor.application - 200 OK: GET - /card-mdl.png in 0ms
+2025-09-05 17:09:06.309 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: GET - /qr in 6ms
+2025-09-05 17:09:09.201 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - /.well-known/openid-credential-issuer in 1ms
+2025-09-05 17:09:09.257 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - /card-mdl.png in 0ms
+2025-09-05 17:09:09.280 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - /card-pid.png in 0ms
+2025-09-05 17:09:09.306 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - /naturalization.png in 0ms
+2025-09-05 17:09:09.377 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - /movie_ticket.png in 0ms
+2025-09-05 17:09:09.400 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - /logo.png in 0ms
+2025-09-05 17:09:09.413 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: GET - /.well-known/oauth-authorization-server in 0ms
+2025-09-05 17:09:09.488 [eventLoopGroupProxy-4-3] INFO  ktor.application - 201 Created: POST - /par in 9ms
+2025-09-05 17:09:09.590 [eventLoopGroupProxy-4-10] INFO  ktor.application - 200 OK: GET - /authorize in 3ms
+2025-09-05 17:09:09.677 [eventLoopGroupProxy-4-10] INFO  ktor.application - 200 OK: GET - /style.css in 1ms
+2025-09-05 17:09:09.678 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: GET - /authorize.js in 1ms
+2025-09-05T17:09:09.705641: WARNING: X509Cert: Truncating fractional seconds of validFrom
+2025-09-05T17:09:09.705731: WARNING: X509Cert: Truncating fractional seconds of validUntil
+2025-09-05 17:09:09.710 [eventLoopGroupProxy-4-2] INFO  ktor.application - 200 OK: POST - /credential_request in 10ms
+2025-09-05 17:09:10.767 [eventLoopGroupProxy-4-2] INFO  ktor.application - 302 Found: POST - /authorize in 4ms -> finish_authorization?issuer_state=zobD397DJR5yzTpRzXojaArR8UrbzTQ2ASIeiyFFudOU6Idzl-PXhNOBx3H-3EdMYr60
+2025-09-05 17:09:10.778 [eventLoopGroupProxy-4-2] INFO  ktor.application - 302 Found: GET - /finish_authorization in 3ms -> https://apps.multipaz.org/landing/?code=mFS0HH7pzETIZxmcBOLBv_3lUnNF_f0bUJxPZWC-7eBp8o4tV5dQSlmoTyZ5Vj_hz-2e&iss=http%3A%2F%2Flocalhost%3A8008&state=cGfRVSin1XoEf9X8qCeg
+2025-09-05 17:09:10.907 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: POST - /token in 27ms
+2025-09-05 17:09:10.965 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: POST - /nonce in 14ms
+2025-09-05T17:09:11.211109: WARNING: MobileSecurityObjectGenerator: Dropping non-zero fractional seconds for timestamp expectedUpdate
+2025-09-05T17:09:11.221145: WARNING: MobileSecurityObjectGenerator: Dropping non-zero fractional seconds for timestamp expectedUpdate
+2025-09-05T17:09:11.223583: WARNING: MobileSecurityObjectGenerator: Dropping non-zero fractional seconds for timestamp expectedUpdate
+2025-09-05 17:09:11.241 [eventLoopGroupProxy-4-3] INFO  ktor.application - 200 OK: POST - /credential in 75ms

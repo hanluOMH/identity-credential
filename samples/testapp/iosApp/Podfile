@@ -1,0 +1,21 @@
+project 'TestApp.xcodeproj'
+
+platform :ios, '16.0'
+
+target 'TestApp' do
+  use_frameworks!
+  pod 'GoogleMLKit/BarcodeScanning', '8.0.0'
+  pod 'GoogleMLKit/FaceDetection', '8.0.0'
+  pod 'TensorFlowLiteObjC', :subspecs => ['CoreML', 'Metal']
+
+  post_install do |installer|
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        # Remove EXCLUDED_ARCHS setting that's causing architecture mismatch
+        config.build_settings.delete('EXCLUDED_ARCHS')
+        # Ensure we build for both arm64 and x86_64 for simulator
+        config.build_settings['ARCHS'] = 'arm64 x86_64'
+      end
+    end
+  end
+end

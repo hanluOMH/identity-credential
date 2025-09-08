@@ -1,0 +1,61 @@
+Type-safe project accessors is an incubating feature.
+
+> Configure project :
+warning: Dokka Gradle plugin V1 is deprecated
+    
+    Dokka Gradle plugin V1 is deprecated, and will be removed in Dokka version 2.1.0
+    Please migrate to Dokka Gradle plugin V2. This will require updating your project.
+    To learn about migrating read the migration guide https://kotl.in/dokka-gradle-migration
+    
+    To start migrating to Dokka Gradle plugin V2 add
+        org.jetbrains.dokka.experimental.gradle.pluginMode=V2EnabledWithHelpers
+    into your project's `gradle.properties` file.
+    
+    We would appreciate your feedback!
+     - Please report any feedback or problems https://kotl.in/dokka-issues
+     - Chat with the community visit #dokka in https://kotlinlang.slack.com/ (To sign up visit https://kotl.in/slack)
+    
+
+> Configure project :multipaz-models
+w: [33m[1m⚠️ Invalid Source Set Dependency Across Trees[0m[0m
+Kotlin Source Set 'androidInstrumentedTest' can't depend on 'commonTest' as they are from different Source Set Trees.
+[32m[1mSolution:[0m[0m
+[32m[3mPlease remove this dependency edge.[0m[0m
+
+
+> Task :multipaz:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :multipaz:transformCommonMainDependenciesMetadata UP-TO-DATE
+> Task :multipaz-cbor-rpc:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :multipaz-cbor-rpc:compileKotlin UP-TO-DATE
+> Task :multipaz-cbor-rpc:compileJava NO-SOURCE
+> Task :multipaz-cbor-rpc:processResources UP-TO-DATE
+> Task :multipaz-cbor-rpc:classes UP-TO-DATE
+> Task :multipaz-cbor-rpc:jar UP-TO-DATE
+> Task :multipaz:kspCommonMainKotlinMetadata UP-TO-DATE
+> Task :multipaz:kspKotlinJvm SKIPPED
+> Task :multipaz:compileKotlinJvm UP-TO-DATE
+> Task :multipaz:compileJvmMainJava NO-SOURCE
+> Task :multipaz:jvmProcessResources NO-SOURCE
+> Task :multipaz:processJvmMainResources SKIPPED
+> Task :multipaz:jvmMainClasses UP-TO-DATE
+> Task :multipaz:jvmJar UP-TO-DATE
+> Task :multipaz-doctypes:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :multipaz-doctypes:compileKotlinJvm UP-TO-DATE
+> Task :multipaz-doctypes:compileJvmMainJava NO-SOURCE
+> Task :multipaz-doctypes:jvmProcessResources NO-SOURCE
+> Task :multipaz-doctypes:processJvmMainResources SKIPPED
+> Task :multipaz-doctypes:jvmMainClasses UP-TO-DATE
+> Task :multipaz-doctypes:jvmJar UP-TO-DATE
+> Task :multipaz-records-server:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :multipaz-records-server:kspKotlin UP-TO-DATE
+> Task :multipaz-records-server:compileKotlin UP-TO-DATE
+> Task :multipaz-records-server:compileJava NO-SOURCE
+> Task :multipaz-records-server:processResources UP-TO-DATE
+> Task :multipaz-records-server:classes UP-TO-DATE
+
+> Task :multipaz-records-server:run
+2025-09-05 17:28:54.605 [main] INFO  ktor.application - Autoreload is disabled because the development mode is off.
+2025-09-05T17:28:54.62816: ERROR: ApplicationExt: No 'admin_password' in config, generated: 'h6Enx8sh4BujuZDcBG0T'
+2025-09-05 17:28:54.659 [main] INFO  ktor.application - Application started in 0.069 seconds.
+2025-09-05 17:28:54.660 [main] INFO  ktor.application - Application started: io.ktor.server.application.Application@13bc8645
+2025-09-05 17:28:54.752 [DefaultDispatcher-worker-1] INFO  ktor.application - Responding at http://0.0.0.0:8007
