@@ -10,10 +10,26 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 //
 // When this starts working again, we can remove the lines below.
 //
-// Check if Android SDK is available (for Cloud Run builds)
-val androidSdkAvailable = System.getenv("ANDROID_HOME") != null || 
-                          System.getProperty("android.sdk.dir") != null ||
-                          file("local.properties").exists() && file("local.properties").readText().contains("sdk.dir")
+// Check if Android SDK is available (for Cloud Run builds).
+//
+// Note: local.properties may be present in the repo but can point to a developer machine path.
+// Only treat it as valid if the SDK directory exists on the current machine.
+val localPropertiesFile = file("local.properties")
+val sdkDirFromLocalProperties = localPropertiesFile
+    .takeIf { it.exists() }
+    ?.readLines()
+    ?.firstOrNull { it.startsWith("sdk.dir=") }
+    ?.substringAfter("sdk.dir=")
+
+val androidHome = System.getenv("ANDROID_HOME")
+val androidSdkRoot = System.getenv("ANDROID_SDK_ROOT")
+val androidSdkDirProp = System.getProperty("android.sdk.dir")
+
+val androidSdkAvailable =
+    (androidHome != null && file(androidHome).exists()) ||
+    (androidSdkRoot != null && file(androidSdkRoot).exists()) ||
+    (androidSdkDirProp != null && file(androidSdkDirProp).exists()) ||
+    (sdkDirFromLocalProperties != null && file(sdkDirFromLocalProperties).exists())
 
 // Only exclude these tasks if multipaz-compose project is included
 if (androidSdkAvailable) {

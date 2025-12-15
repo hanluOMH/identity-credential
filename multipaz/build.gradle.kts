@@ -1,17 +1,41 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
-import org.gradle.kotlin.dsl.implementation
-import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.get
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.konan.target.HostManager
+import com.android.build.gradle.LibraryExtension
+
+// Check if Android SDK is available (for Cloud Run builds)
+// Note: local.properties may exist but point to a developer machine path; only treat it as valid
+// if the directory exists on the current machine.
+val localPropertiesFile = rootProject.file("local.properties")
+val sdkDirFromLocalProperties = localPropertiesFile
+    .takeIf { it.exists() }
+    ?.readLines()
+    ?.firstOrNull { it.startsWith("sdk.dir=") }
+    ?.substringAfter("sdk.dir=")
+
+val androidHome = System.getenv("ANDROID_HOME")
+val androidSdkRoot = System.getenv("ANDROID_SDK_ROOT")
+val androidSdkDirProp = System.getProperty("android.sdk.dir")
+
+val androidSdkAvailable =
+    (androidHome != null && rootProject.file(androidHome).exists()) ||
+    (androidSdkRoot != null && rootProject.file(androidSdkRoot).exists()) ||
+    (androidSdkDirProp != null && rootProject.file(androidSdkDirProp).exists()) ||
+    (sdkDirFromLocalProperties != null && rootProject.file(sdkDirFromLocalProperties).exists())
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
+    // Don't apply Android plugin unless SDK is available (Cloud Run build doesn't have it).
+    alias(libs.plugins.androidLibrary) apply false
     alias(libs.plugins.ksp)
     alias(libs.plugins.buildconfig)
     id("maven-publish")
+}
+
+if (androidSdkAvailable) {
+    apply(plugin = "com.android.library")
 }
 
 val projectVersionCode: Int by rootProject.extra
@@ -33,27 +57,30 @@ kotlin {
 
     jvm()
 
-    androidTarget {
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
-        }
+    if (androidSdkAvailable) {
+        androidTarget {
+            @OptIn(ExperimentalKotlinGradlePluginApi::class)
+            compilerOptions {
+                jvmTarget.set(JvmTarget.JVM_17)
+            }
 
-        publishLibraryVariants("release")
+            publishLibraryVariants("release")
+        }
     }
 
-    listOf(
-        iosX64(),
-        iosArm64(),
-        iosSimulatorArm64()
-    ).forEach {
-        val platform = when (it.name) {
-            "iosX64" -> "iphonesimulator"
-            "iosArm64" -> "iphoneos"
-            "iosSimulatorArm64" -> "iphonesimulator"
-            else -> error("Unsupported target ${it.name}")
-        }
-        if (HostManager.hostIsMac) {
+    // iOS targets only build on macOS (Cloud Run builder is Linux).
+    if (HostManager.hostIsMac) {
+        listOf(
+            iosX64(),
+            iosArm64(),
+            iosSimulatorArm64()
+        ).forEach {
+            val platform = when (it.name) {
+                "iosX64" -> "iphonesimulator"
+                "iosArm64" -> "iphoneos"
+                "iosSimulatorArm64" -> "iphonesimulator"
+                else -> error("Unsupported target ${it.name}")
+            }
             it.compilations.getByName("main") {
                 val SwiftBridge by cinterops.creating {
                     definitionFile.set(project.file("nativeInterop/cinterop/SwiftBridge-$platform.def"))
@@ -128,23 +155,28 @@ kotlin {
             }
         }
 
-        val androidMain by getting {
-            dependsOn(javaSharedMain)
-            dependencies {
-                implementation(libs.androidx.biometrics)
-                implementation(libs.androidx.lifecycle.viewmodel)
+        if (androidSdkAvailable) {
+            val androidMain by getting {
+                dependsOn(javaSharedMain)
+                dependencies {
+                    implementation(libs.androidx.biometrics)
+                    implementation(libs.androidx.lifecycle.viewmodel)
+                }
             }
         }
 
-        val iosMain by getting {
-            dependencies {
-                // This dependency is needed for SqliteStorage implementation.
-                // KMP-compatible version is still alpha and it is not compatible with
-                // other androidx packages, particularly androidx.work that we use in wallet.
-                // TODO: once compatibility issues are resolved, SqliteStorage and this
-                // dependency can be moved into commonMain.
-                implementation(libs.androidx.sqlite)
-                implementation(libs.androidx.sqlite.framework)
+        // iOS source sets only exist when iOS targets are created (macOS builds).
+        if (HostManager.hostIsMac) {
+            val iosMain by getting {
+                dependencies {
+                    // This dependency is needed for SqliteStorage implementation.
+                    // KMP-compatible version is still alpha and it is not compatible with
+                    // other androidx packages, particularly androidx.work that we use in wallet.
+                    // TODO: once compatibility issues are resolved, SqliteStorage and this
+                    // dependency can be moved into commonMain.
+                    implementation(libs.androidx.sqlite)
+                    implementation(libs.androidx.sqlite.framework)
+                }
             }
         }
 
@@ -198,55 +230,61 @@ dependencies {
     add("kspJvmTest", project(":multipaz-cbor-rpc"))
 }
 
-tasks.all {
-    if (name == "compileDebugKotlinAndroid" || name == "compileReleaseKotlinAndroid" ||
-        name == "androidReleaseSourcesJar" || name == "iosArm64SourcesJar" ||
-        name == "iosSimulatorArm64SourcesJar" || name == "iosX64SourcesJar" ||
-        name == "jvmSourcesJar" || name == "sourcesJar") {
-        dependsOn("kspCommonMainKotlinMetadata")
-    }
-}
+// Ensure common KSP runs before metadata/JVM/iOS compiles (task collection is live/lazy).
+val kspCommonMain = tasks.matching { it.name == "kspCommonMainKotlinMetadata" }
 
-tasks["compileKotlinIosX64"].dependsOn("kspCommonMainKotlinMetadata")
-tasks["compileKotlinIosArm64"].dependsOn("kspCommonMainKotlinMetadata")
-tasks["compileKotlinIosSimulatorArm64"].dependsOn("kspCommonMainKotlinMetadata")
-tasks["compileKotlinJvm"].dependsOn("kspCommonMainKotlinMetadata")
+tasks.matching { it.name == "compileKotlinMetadata" || it.name == "compileCommonMainKotlinMetadata" }
+    .configureEach { dependsOn(kspCommonMain) }
+
+tasks.named("compileKotlinJvm").configure { dependsOn(kspCommonMain) }
 
 tasks.withType<Test> {
     testLogging {
         exceptionFormat = TestExceptionFormat.FULL
     }
 }
-android {
-    namespace = "org.multipaz"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
 
-    defaultConfig {
-        minSdk = 26
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        consumerProguardFiles("consumer-rules.pro")
-    }
+// Only wire iOS compile tasks on macOS (otherwise these tasks don't exist)
+if (HostManager.hostIsMac) {
+    tasks.named("compileKotlinIosX64").configure { dependsOn(kspCommonMain) }
+    tasks.named("compileKotlinIosArm64").configure { dependsOn(kspCommonMain) }
+    tasks.named("compileKotlinIosSimulatorArm64").configure { dependsOn(kspCommonMain) }
+}
 
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
+// Configure Android only when SDK is available. Use typed extension configuration
+// to avoid Kotlin DSL accessors requiring the plugin at script compile-time.
+if (androidSdkAvailable) {
+    extensions.configure<LibraryExtension>("android") {
+        namespace = "org.multipaz"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
 
-    packaging {
-        resources {
-            excludes += listOf("/META-INF/{AL2.0,LGPL2.1}")
-            excludes += listOf("/META-INF/versions/9/OSGI-INF/MANIFEST.MF")
+        defaultConfig {
+            minSdk = 26
+            testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+            consumerProguardFiles("consumer-rules.pro")
         }
-    }
 
-    publishing {
-        singleVariant("release") {
-            withSourcesJar()
+        compileOptions {
+            sourceCompatibility = JavaVersion.VERSION_17
+            targetCompatibility = JavaVersion.VERSION_17
         }
-    }
 
-    testOptions {
-        unitTests.isReturnDefaultValues = true
+        packaging {
+            resources {
+                excludes += listOf("/META-INF/{AL2.0,LGPL2.1}")
+                excludes += listOf("/META-INF/versions/9/OSGI-INF/MANIFEST.MF")
+            }
+        }
+
+        publishing {
+            singleVariant("release") {
+                withSourcesJar()
+            }
+        }
+
+        testOptions {
+            unitTests.isReturnDefaultValues = true
+        }
     }
 }
 

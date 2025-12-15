@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
+import org.jetbrains.kotlin.konan.target.HostManager
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -17,6 +18,8 @@ kotlin {
 
     jvm()
 
+    // iOS targets only build on macOS (Cloud Run builder is Linux).
+    if (HostManager.hostIsMac) {
     listOf(
         iosX64(),
         iosArm64(),
@@ -32,6 +35,7 @@ kotlin {
             linkerOpts(
                 "-L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/${platform}/",
             )
+            }
         }
     }
 

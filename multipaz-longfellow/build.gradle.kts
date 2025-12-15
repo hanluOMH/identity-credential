@@ -1,11 +1,37 @@
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.konan.target.HostManager
+import com.android.build.gradle.LibraryExtension
+
+// Check if Android SDK is available (Cloud Run build doesn't have it).
+// Note: local.properties may exist but point to a developer machine path; only treat it as valid
+// if the directory exists on the current machine.
+val localPropertiesFile = rootProject.file("local.properties")
+val sdkDirFromLocalProperties = localPropertiesFile
+    .takeIf { it.exists() }
+    ?.readLines()
+    ?.firstOrNull { it.startsWith("sdk.dir=") }
+    ?.substringAfter("sdk.dir=")
+
+val androidHome = System.getenv("ANDROID_HOME")
+val androidSdkRoot = System.getenv("ANDROID_SDK_ROOT")
+val androidSdkDirProp = System.getProperty("android.sdk.dir")
+
+val androidSdkAvailable =
+    (androidHome != null && rootProject.file(androidHome).exists()) ||
+    (androidSdkRoot != null && rootProject.file(androidSdkRoot).exists()) ||
+    (androidSdkDirProp != null && rootProject.file(androidSdkDirProp).exists()) ||
+    (sdkDirFromLocalProperties != null && rootProject.file(sdkDirFromLocalProperties).exists())
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.androidLibrary) apply false
     alias(libs.plugins.ksp)
     id("maven-publish")
+}
+
+if (androidSdkAvailable) {
+    apply(plugin = "com.android.library")
 }
 
 val projectVersionCode: Int by rootProject.extra
@@ -21,42 +47,47 @@ kotlin {
 
     jvm()
 
-    androidTarget {
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
-        }
+    if (androidSdkAvailable) {
+        androidTarget {
+            @OptIn(ExperimentalKotlinGradlePluginApi::class)
+            compilerOptions {
+                jvmTarget.set(JvmTarget.JVM_17)
+            }
 
-        publishLibraryVariants("release")
+            publishLibraryVariants("release")
+        }
     }
 
-    listOf(
-        iosX64(),
-        iosArm64(),
-        iosSimulatorArm64()
-    ).forEach {
-        it.binaries.framework {
-            baseName = "longfellow"
-        }
-        val zkLibExt = when (it.name) {
-            "iosX64" -> "x86_64-iphonesimulator"
-            "iosArm64" -> "arm64-iphoneos"
-            "iosSimulatorArm64" -> "arm64-iphonesimulator"
-            else -> error("Unsupported target ${it.name}")
-        }
-        it.compilations.getByName("main") {
-            val Longfellow by cinterops.creating {
-                definitionFile.set(project.file("$rootDir/multipaz-longfellow/src/iosMain/MdocZk.def"))
-                includeDirs.headerFilterOnly("$rootDir/multipaz-longfellow/src/iosMain/nativelibs/$zkLibExt/include")
-                extraOpts("-libraryPath", "$rootDir/multipaz-longfellow/src/iosMain/nativelibs/$zkLibExt/lib")
-                packageName = "Longfellow"
+    // iOS targets only build on macOS (Cloud Run builder is Linux).
+    if (HostManager.hostIsMac) {
+        listOf(
+            iosX64(),
+            iosArm64(),
+            iosSimulatorArm64()
+        ).forEach {
+            it.binaries.framework {
+                baseName = "longfellow"
             }
-        }
-        it.binaries.all {
-            linkerOpts(
-                "-L$rootDir/multipaz-longfellow/src/iosMain/nativeLibs/$zkLibExt/lib",
-                "-lmdoc_static"
-            )
+            val zkLibExt = when (it.name) {
+                "iosX64" -> "x86_64-iphonesimulator"
+                "iosArm64" -> "arm64-iphoneos"
+                "iosSimulatorArm64" -> "arm64-iphonesimulator"
+                else -> error("Unsupported target ${it.name}")
+            }
+            it.compilations.getByName("main") {
+                val Longfellow by cinterops.creating {
+                    definitionFile.set(project.file("$rootDir/multipaz-longfellow/src/iosMain/MdocZk.def"))
+                    includeDirs.headerFilterOnly("$rootDir/multipaz-longfellow/src/iosMain/nativelibs/$zkLibExt/include")
+                    extraOpts("-libraryPath", "$rootDir/multipaz-longfellow/src/iosMain/nativelibs/$zkLibExt/lib")
+                    packageName = "Longfellow"
+                }
+            }
+            it.binaries.all {
+                linkerOpts(
+                    "-L$rootDir/multipaz-longfellow/src/iosMain/nativeLibs/$zkLibExt/lib",
+                    "-lmdoc_static"
+                )
+            }
         }
     }
 
@@ -96,41 +127,47 @@ kotlin {
             dependsOn(javaSharedMain)
         }
 
-        val androidMain by getting {
-            dependsOn(javaSharedMain)
+        if (androidSdkAvailable) {
+            val androidMain by getting {
+                dependsOn(javaSharedMain)
+            }
         }
     }
 }
 
-android {
-    namespace = "org.multipaz.mdoc.zkp.longfellow"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
+if (androidSdkAvailable) {
+    // Configure Android only when SDK is available. Use typed extension configuration
+    // to avoid Kotlin DSL accessors requiring the plugin at script compile-time.
+    extensions.configure<LibraryExtension>("android") {
+        namespace = "org.multipaz.mdoc.zkp.longfellow"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
 
-    defaultConfig {
-        minSdk = 26
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        consumerProguardFiles("consumer-rules.pro")
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    testOptions {
-        unitTests.isReturnDefaultValues = true
-    }
-
-    packaging {
-        resources {
-            excludes += listOf("/META-INF/{AL2.0,LGPL2.1}")
-            excludes += listOf("/META-INF/versions/9/OSGI-INF/MANIFEST.MF")
+        defaultConfig {
+            minSdk = 26
+            testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+            consumerProguardFiles("consumer-rules.pro")
         }
-    }
 
-    publishing {
-        singleVariant("release") {
-            withSourcesJar()
+        compileOptions {
+            sourceCompatibility = JavaVersion.VERSION_17
+            targetCompatibility = JavaVersion.VERSION_17
+        }
+
+        testOptions {
+            unitTests.isReturnDefaultValues = true
+        }
+
+        packaging {
+            resources {
+                excludes += listOf("/META-INF/{AL2.0,LGPL2.1}")
+                excludes += listOf("/META-INF/versions/9/OSGI-INF/MANIFEST.MF")
+            }
+        }
+
+        publishing {
+            singleVariant("release") {
+                withSourcesJar()
+            }
         }
     }
 }
