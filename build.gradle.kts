@@ -4,12 +4,23 @@ import org.jetbrains.dokka.gradle.DokkaTaskPartial
 // For `versionCode` we just use the number of commits.
 val projectVersionCode: Int by extra {
     val stdout = ByteArrayOutputStream()
-    rootProject.exec {
+    val stderr = ByteArrayOutputStream()
+    val result = rootProject.exec {
         commandLine("git", "rev-list", "HEAD", "--count")
         standardOutput = stdout
+        errorOutput = stderr
+        isIgnoreExitValue = true
+    }
+    if (result.exitValue != 0) {
+        // If git fails, use a default version code
+        return@extra 1
     }
     @Suppress("DEPRECATION") // toString() is deprecated.
-    stdout.toString().trim().toInt()
+    val count = stdout.toString().trim()
+    if (count.isEmpty()) {
+        return@extra 1
+    }
+    count.toInt()
 }
 
 // The version number of the project.
@@ -22,9 +33,15 @@ val projectVersionNext = "0.97.0"
 
 private fun runCommand(args: List<String>): String {
     val stdout = ByteArrayOutputStream()
-    rootProject.exec {
+    val stderr = ByteArrayOutputStream()
+    val result = rootProject.exec {
         commandLine(args)
         standardOutput = stdout
+        errorOutput = stderr
+        isIgnoreExitValue = true
+    }
+    if (result.exitValue != 0) {
+        return ""
     }
     return stdout.toString().trim()
 }
@@ -41,9 +58,14 @@ val projectVersionName: String by extra {
     if (projectVersionNext.isEmpty()) {
         projectVersionLast
     } else {
-        val numCommitsSinceTag = runCommand(listOf("git", "rev-list", "${projectVersionLast}..", "--count"))
+        val numCommitsSinceTag = runCommand(listOf("git", "rev-list", "--count", "${projectVersionLast}.."))
         val commitHash = runCommand(listOf("git", "rev-parse", "--short", "HEAD"))
-        projectVersionNext + "-pre.${numCommitsSinceTag}.${commitHash}"
+        if (numCommitsSinceTag.isEmpty() || commitHash.isEmpty()) {
+            // If git commands fail, just use the next version without pre-release info
+            projectVersionNext
+        } else {
+            projectVersionNext + "-pre.${numCommitsSinceTag}.${commitHash}"
+        }
     }
 }
 

@@ -81,7 +81,10 @@ kotlin {
         val androidInstrumentedTest by getting {
             dependsOn(commonTest)
             dependencies {
-                implementation(project(":multipaz-dcapi:matcherTest"))
+                // Only include matcherTest if Android SDK is available
+                if (rootProject.findProject(":multipaz-dcapi:matcherTest") != null) {
+                    implementation(project(":multipaz-dcapi:matcherTest"))
+                }
                 implementation(libs.androidx.espresso.core)
                 implementation(libs.kotlin.test)
                 implementation(libs.kotlinx.coroutines.test)

@@ -10,11 +10,19 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 //
 // When this starts working again, we can remove the lines below.
 //
-startParameter.excludedTaskNames +=
-    listOf(
-        ":multipaz-compose:testDebugUnitTest",
-        ":multipaz-compose:testReleaseUnitTest"
-    )
+// Check if Android SDK is available (for Cloud Run builds)
+val androidSdkAvailable = System.getenv("ANDROID_HOME") != null || 
+                          System.getProperty("android.sdk.dir") != null ||
+                          file("local.properties").exists() && file("local.properties").readText().contains("sdk.dir")
+
+// Only exclude these tasks if multipaz-compose project is included
+if (androidSdkAvailable) {
+    startParameter.excludedTaskNames +=
+        listOf(
+            ":multipaz-compose:testDebugUnitTest",
+            ":multipaz-compose:testReleaseUnitTest"
+        )
+}
 
 pluginManagement {
     repositories {
@@ -57,17 +65,20 @@ include(":multipaz")
 include(":multipaz:SwiftBridge")
 include(":multipaz-dcapi")
 include(":multipaz-doctypes")
-include(":multipaz-android-legacy")
+if (androidSdkAvailable) {
+    include(":multipaz-android-legacy")
+    include(":multipaz-dcapi:matcherTest")
+    include(":multipaz-compose")
+    include(":samples:testapp")
+}
 include(":multipaz-csa")
-include(":multipaz-android-legacy")
 include(":multipaz-longfellow")
 include(":multipazctl")
-include(":multipaz-dcapi:matcherTest")
 include(":multipaz-backend-server")
-include(":multipaz-compose")
 include(":multipaz-openid4vci-server")
 include(":multipaz-verifier-server")
 include(":multipaz-csa-server")
 include(":multipaz-records-server")
-include(":samples:testapp")
-include(":xcframework")
+if (androidSdkAvailable) {
+    include(":xcframework")
+}

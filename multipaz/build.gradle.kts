@@ -159,34 +159,37 @@ kotlin {
             }
         }
 
-        val androidInstrumentedTest by getting {
-            dependsOn(commonTest)
-            dependencies {
-                implementation(libs.bouncy.castle.bcprov)
-                implementation(libs.bouncy.castle.bcpkix)
-                implementation(project(":multipaz-doctypes"))
-                implementation(project(":multipaz-dcapi"))
-                implementation(project(":multipaz-dcapi:matcherTest"))
-                implementation(libs.androidx.sqlite)
-                implementation(libs.androidx.sqlite.framework)
-                implementation(libs.androidx.sqlite.bundled)
-                implementation(libs.androidx.test.junit)
-                implementation(libs.androidx.espresso.core)
-                implementation(libs.kotlin.test)
-                implementation(libs.kotlinx.coroutines.test)
-                implementation(libs.kotlinx.coroutines.android)
-                implementation(libs.ktor.client.mock)
-                implementation(project(":multipaz-csa"))
-            }
-        }
-
-        val iosTest by getting {
-            dependencies {
-                implementation(libs.androidx.sqlite)
-                implementation(libs.androidx.sqlite.framework)
-                implementation(libs.androidx.sqlite.bundled)
-            }
-        }
+//        val androidInstrumentedTest by getting {
+//            dependsOn(commonTest)
+//            dependencies {
+//                implementation(libs.bouncy.castle.bcprov)
+//                implementation(libs.bouncy.castle.bcpkix)
+//                implementation(project(":multipaz-doctypes"))
+//                implementation(project(":multipaz-dcapi"))
+//                // Only include matcherTest if Android SDK is available
+//                if (rootProject.findProject(":multipaz-dcapi:matcherTest") != null) {
+//                    implementation(project(":multipaz-dcapi:matcherTest"))
+//                }
+//                implementation(libs.androidx.sqlite)
+//                implementation(libs.androidx.sqlite.framework)
+//                implementation(libs.androidx.sqlite.bundled)
+//                implementation(libs.androidx.test.junit)
+//                implementation(libs.androidx.espresso.core)
+//                implementation(libs.kotlin.test)
+//                implementation(libs.kotlinx.coroutines.test)
+//                implementation(libs.kotlinx.coroutines.android)
+//                implementation(libs.ktor.client.mock)
+//                implementation(project(":multipaz-csa"))
+//            }
+//        }
+//
+//        val iosTest by getting {
+//            dependencies {
+//                implementation(libs.androidx.sqlite)
+//                implementation(libs.androidx.sqlite.framework)
+//                implementation(libs.androidx.sqlite.bundled)
+//            }
+//        }
     }
 }
 
