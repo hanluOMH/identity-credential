@@ -258,6 +258,35 @@ tasks.matching { it.name == "compileKotlinMetadata" || it.name == "compileCommon
 tasks.matching { it.name == "compileKotlinJvm" }
     .configureEach { dependsOn(kspCommonMain, kspJvmMain) }
 
+// Cloud Buildpacks typically invoke `assemble` at the root. Make sure KSP runs even if Gradle
+// ends up executing a different compile task graph than we expect.
+tasks.matching { it.name == "assemble" }.configureEach {
+    dependsOn(kspCommonMain, kspJvmMain)
+}
+
+// Fail fast with a clear message if KSP outputs are missing in CI/Cloud Run.
+// This turns a huge cascade of "Unresolved reference fromCbor/toCbor/Stub" into a single actionable error.
+tasks.matching { it.name == "compileKotlinJvm" }.configureEach {
+    doFirst {
+        val candidates = listOf(
+            file("$buildDir/generated/ksp/metadata/commonMain/kotlin"),
+            file("$buildDir/generated/ksp/jvm/jvmMain/kotlin"),
+            file("$buildDir/generated/ksp/jvmMain/kotlin"),
+            file("$buildDir/generated/ksp/kotlinJvm/jvmMain/kotlin"),
+        )
+        val hasAnyGeneratedKt = candidates.any { dir ->
+            dir.exists() && project.fileTree(dir).matching { include("**/*.kt") }.files.isNotEmpty()
+        }
+        if (!hasAnyGeneratedKt) {
+            throw GradleException(
+                "KSP generated sources not found. Expected one of: " +
+                    candidates.joinToString { it.path } +
+                    ". This usually means the KSP tasks did not run or wrote to a different directory."
+            )
+        }
+    }
+}
+
 tasks.withType<Test> {
     testLogging {
         exceptionFormat = TestExceptionFormat.FULL
