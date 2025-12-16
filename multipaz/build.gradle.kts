@@ -238,6 +238,12 @@ tasks.matching { it.name == "compileKotlinMetadata" || it.name == "compileCommon
 
 tasks.named("compileKotlinJvm").configure { dependsOn(kspCommonMain) }
 
+tasks.configureEach {
+    if (name == "compileDebugKotlinAndroid" || name == "compileReleaseKotlinAndroid") {
+        dependsOn(kspCommonMain)
+    }
+}
+
 tasks.withType<Test> {
     testLogging {
         exceptionFormat = TestExceptionFormat.FULL

@@ -48,33 +48,33 @@ kotlin {
     jvm()
 
     if (androidSdkAvailable) {
-        androidTarget {
-            @OptIn(ExperimentalKotlinGradlePluginApi::class)
-            compilerOptions {
-                jvmTarget.set(JvmTarget.JVM_17)
-            }
+    androidTarget {
+        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
 
-            publishLibraryVariants("release")
+        publishLibraryVariants("release")
         }
     }
 
     // iOS targets only build on macOS (Cloud Run builder is Linux).
     if (HostManager.hostIsMac) {
-        listOf(
-            iosX64(),
-            iosArm64(),
-            iosSimulatorArm64()
-        ).forEach {
-            val platform = when (it.name) {
-                "iosX64" -> "iphonesimulator"
-                "iosArm64" -> "iphoneos"
-                "iosSimulatorArm64" -> "iphonesimulator"
-                else -> error("Unsupported target ${it.name}")
-            }
-            it.binaries.all {
-                linkerOpts(
-                    "-L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/${platform}/",
-                )
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach {
+        val platform = when (it.name) {
+            "iosX64" -> "iphonesimulator"
+            "iosArm64" -> "iphoneos"
+            "iosSimulatorArm64" -> "iphonesimulator"
+            else -> error("Unsupported target ${it.name}")
+        }
+        it.binaries.all {
+            linkerOpts(
+                "-L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/${platform}/",
+            )
             }
         }
     }
@@ -92,13 +92,13 @@ kotlin {
         }
 
         if (androidSdkAvailable) {
-            val androidMain by getting {
-                dependencies {
-                    implementation(libs.accompanist.permissions)
-                    implementation(libs.androidx.material)
-                    implementation(libs.play.services.identity.credentials)
-                    implementation(libs.androidx.credentials)
-                    implementation(libs.androidx.credentials.play.services.auth)
+        val androidMain by getting {
+            dependencies {
+                implementation(libs.accompanist.permissions)
+                implementation(libs.androidx.material)
+                implementation(libs.play.services.identity.credentials)
+                implementation(libs.androidx.credentials)
+                implementation(libs.androidx.credentials.play.services.auth)
                 }
             }
         }
@@ -114,17 +114,17 @@ kotlin {
         }
 
         if (androidSdkAvailable) {
-            val androidInstrumentedTest by getting {
-                dependsOn(commonTest)
-                dependencies {
+        val androidInstrumentedTest by getting {
+            dependsOn(commonTest)
+            dependencies {
                     // Only include matcherTest if Android SDK is available
                     if (rootProject.findProject(":multipaz-dcapi:matcherTest") != null) {
-                        implementation(project(":multipaz-dcapi:matcherTest"))
+                implementation(project(":multipaz-dcapi:matcherTest"))
                     }
-                    implementation(libs.androidx.espresso.core)
-                    implementation(libs.kotlin.test)
-                    implementation(libs.kotlinx.coroutines.test)
-                    implementation(libs.kotlinx.coroutines.android)
+                implementation(libs.androidx.espresso.core)
+                implementation(libs.kotlin.test)
+                implementation(libs.kotlinx.coroutines.test)
+                implementation(libs.kotlinx.coroutines.android)
                 }
             }
         }
@@ -135,37 +135,37 @@ if (androidSdkAvailable) {
     // Configure Android only when SDK is available. Use typed extension configuration
     // to avoid Kotlin DSL accessors requiring the plugin at script compile-time.
     extensions.configure<LibraryExtension>("android") {
-        namespace = "org.multipaz.dcapi"
-        compileSdk = libs.versions.android.compileSdk.get().toInt()
+    namespace = "org.multipaz.dcapi"
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
 
-        defaultConfig {
-            minSdk = 26
-            testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        }
+    defaultConfig {
+        minSdk = 26
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
 
-        compileOptions {
-            sourceCompatibility = JavaVersion.VERSION_17
-            targetCompatibility = JavaVersion.VERSION_17
-        }
-        dependencies {
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    dependencies {
             add("implementation", libs.kotlinx.datetime)
-        }
+    }
 
-        packaging {
-            resources {
-                excludes += listOf("/META-INF/{AL2.0,LGPL2.1}")
-                excludes += listOf("/META-INF/versions/9/OSGI-INF/MANIFEST.MF")
-            }
+    packaging {
+        resources {
+            excludes += listOf("/META-INF/{AL2.0,LGPL2.1}")
+            excludes += listOf("/META-INF/versions/9/OSGI-INF/MANIFEST.MF")
         }
+    }
 
-        publishing {
-            singleVariant("release") {
-                withSourcesJar()
-            }
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
         }
+    }
 
-        testOptions {
-            unitTests.isReturnDefaultValues = true
+    testOptions {
+        unitTests.isReturnDefaultValues = true
         }
     }
 }
