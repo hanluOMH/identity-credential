@@ -1,3 +1,6 @@
+import org.gradle.api.tasks.bundling.Jar
+
+
 plugins {
     id("java-library")
     id("org.jetbrains.kotlin.jvm")
@@ -48,6 +51,19 @@ dependencies {
 
 ktor {
 }
+
+// Create an executable JAR with all dependencies
+tasks.register<Jar>("fatJar") {
+    archiveClassifier.set("all")
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes["Main-Class"] = "org.multipaz.records.server.Main"
+    }
+    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+    from(sourceSets.main.get().output)
+    dependsOn("classes")
+}
+
 subprojects {
 	apply(plugin = "org.jetbrains.dokka")
 }

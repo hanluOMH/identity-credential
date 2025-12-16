@@ -5,6 +5,8 @@
 xcuserdata
 !src/**/build/
 **/build/
+# Exception: allow committing the fat JAR for multipaz-records-server
+!multipaz-records-server/build/libs/multipaz-records-server-all.jar
 local.properties
 .idea
 .DS_Store
