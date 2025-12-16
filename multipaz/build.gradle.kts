@@ -253,16 +253,25 @@ dependencies {
 // Strategy: Use whenTaskAdded to hook into tasks as they're registered, and make compilation
 // tasks depend on any KSP task that matches common patterns. This is more robust than trying
 // to find tasks by exact name, since KSP task names can vary by version/platform.
+//
+// IMPORTANT: Only make MAIN source compilation depend on KSP, NOT test compilation.
+// Test KSP tasks (kspTest*) depend on test compilation, so making test compilation depend
+// on test KSP tasks creates a circular dependency.
 tasks.whenTaskAdded {
-    // When a KSP task is added, make all compilation tasks depend on it
-    if (name.startsWith("ksp") && (name.contains("CommonMain") || name.contains("Metadata") || name.contains("Jvm"))) {
+    // When a KSP task is added, make main source compilation tasks depend on it
+    // BUT exclude test KSP tasks and test compilation tasks to avoid circular dependencies
+    if (name.startsWith("ksp") && 
+        (name.contains("CommonMain") || name.contains("Metadata") || name.contains("Jvm")) &&
+        !name.contains("Test")) {  // Exclude test KSP tasks
+        
         tasks.withType<KotlinCompile>().configureEach {
-            if (!name.startsWith("ksp")) {
+            // Only make main source compilation depend on KSP, not test compilation
+            if (!name.startsWith("ksp") && !name.contains("Test")) {
                 dependsOn(this@whenTaskAdded)
             }
         }
         tasks.withType<KotlinNativeCompile>().configureEach {
-            if (!name.startsWith("ksp")) {
+            if (!name.startsWith("ksp") && !name.contains("Test")) {
                 dependsOn(this@whenTaskAdded)
             }
         }
@@ -271,8 +280,10 @@ tasks.whenTaskAdded {
 
 afterEvaluate {
     // Find all KSP tasks by pattern (more flexible than exact name matching)
+    // IMPORTANT: Exclude test KSP tasks to avoid circular dependencies
     val kspTasks = tasks.matching { it.name.startsWith("ksp") && 
-        (it.name.contains("CommonMain") || it.name.contains("Metadata") || it.name.contains("Jvm")) }
+        (it.name.contains("CommonMain") || it.name.contains("Metadata") || it.name.contains("Jvm")) &&
+        !it.name.contains("Test") }  // Exclude test KSP tasks
     
     // Convert to list to check if empty (TaskCollection doesn't have isEmpty property)
     val kspTasksList = kspTasks.toList()
@@ -289,30 +300,32 @@ afterEvaluate {
             )
         }
     } else {
-        // Make all compilation tasks depend on found KSP tasks
+        // Make only MAIN source compilation tasks depend on found KSP tasks (not test)
         // Use the TaskCollection (kspTasks) for dependsOn as it accepts TaskCollection
         tasks.withType<KotlinCompile>().configureEach {
-            if (!name.startsWith("ksp")) {
+            // Only make main source compilation depend on KSP, not test compilation
+            if (!name.startsWith("ksp") && !name.contains("Test")) {
                 dependsOn(kspTasks)
             }
         }
         
         tasks.withType<KotlinNativeCompile>().configureEach {
-            if (!name.startsWith("ksp")) {
+            if (!name.startsWith("ksp") && !name.contains("Test")) {
                 dependsOn(kspTasks)
             }
         }
         
-        // Ensure assemble and classes depend on KSP
+        // Ensure assemble and classes depend on KSP (these are main source tasks)
         tasks.matching { it.name == "assemble" || it.name == "classes" }.configureEach {
             dependsOn(kspTasks)
         }
     }
     
     // Fail fast with a clear message if KSP outputs are missing in CI/Cloud Run.
-    // Check BEFORE any compilation task runs.
+    // Check BEFORE any MAIN source compilation task runs (not test compilation).
     tasks.withType<KotlinCompile>().configureEach {
-        if (!name.startsWith("ksp")) {
+        // Only check for main source compilation, not test compilation
+        if (!name.startsWith("ksp") && !name.contains("Test")) {
             doFirst {
                 val buildDir = layout.buildDirectory.get().asFile
                 val metadataDir = file("$buildDir/generated/ksp/metadata/commonMain/kotlin")
