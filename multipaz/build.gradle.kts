@@ -231,18 +231,25 @@ dependencies {
 }
 
 // Ensure common KSP runs before all Kotlin compiles.
-// This approach is more robust than matching specific task names.
-// Handle both KotlinCompile (JVM/Android) and KotlinNativeCompile (iOS/Native) tasks.
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().all {
-    if (name != "kspCommonMainKotlinMetadata") {
-        dependsOn("kspCommonMainKotlinMetadata")
+// Use afterEvaluate to ensure KSP task is registered before we configure dependencies.
+afterEvaluate {
+    // Find the KSP task using matching - returns a TaskCollection that works with dependsOn
+    // even if the task doesn't exist yet (the collection will be empty but dependsOn handles that)
+    val kspTaskName = "kspCommonMainKotlinMetadata"
+    val kspTasks = tasks.matching { it.name == kspTaskName }
+    
+    // Handle both KotlinCompile (JVM/Android) and KotlinNativeCompile (iOS/Native) tasks.
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().all {
+        if (name != kspTaskName) {
+            dependsOn(kspTasks)
+        }
     }
-}
 
-// Also handle KotlinNativeCompile tasks (iOS targets on macOS)
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile>().all {
-    if (name != "kspCommonMainKotlinMetadata") {
-        dependsOn("kspCommonMainKotlinMetadata")
+    // Also handle KotlinNativeCompile tasks (iOS targets on macOS)
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile>().all {
+        if (name != kspTaskName) {
+            dependsOn(kspTasks)
+        }
     }
 }
 
