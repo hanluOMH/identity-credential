@@ -264,6 +264,12 @@ tasks.whenTaskAdded {
         (name.contains("CommonMain") || name.contains("Metadata") || name.contains("Jvm")) &&
         !name.contains("Test")) {  // Exclude test KSP tasks
         
+        // KSP tasks need BuildConfig to be generated first (BuildConfig is used in source code)
+        val buildConfigTask = tasks.findByName("generateBuildConfigClasses")
+        if (buildConfigTask != null) {
+            dependsOn(buildConfigTask)
+        }
+        
         tasks.withType<KotlinCompile>().configureEach {
             // Only make main source compilation depend on KSP, not test compilation
             if (!name.startsWith("ksp") && !name.contains("Test")) {
@@ -284,6 +290,14 @@ afterEvaluate {
     val kspTasks = tasks.matching { it.name.startsWith("ksp") && 
         (it.name.contains("CommonMain") || it.name.contains("Metadata") || it.name.contains("Jvm")) &&
         !it.name.contains("Test") }  // Exclude test KSP tasks
+    
+    // KSP tasks need BuildConfig to be generated first (BuildConfig is used in source code)
+    val buildConfigTask = tasks.findByName("generateBuildConfigClasses")
+    if (buildConfigTask != null) {
+        kspTasks.configureEach {
+            dependsOn(buildConfigTask)
+        }
+    }
     
     // Convert to list to check if empty (TaskCollection doesn't have isEmpty property)
     val kspTasksList = kspTasks.toList()
