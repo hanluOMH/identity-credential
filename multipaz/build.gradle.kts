@@ -150,6 +150,9 @@ kotlin {
 
         val jvmMain by getting {
             dependsOn(javaSharedMain)
+            // Include KSP output for the JVM target. This is the most reliable path for Cloud Run builds
+            // because it doesn't depend on the metadata KSP task being present/executed.
+            kotlin.srcDir("build/generated/ksp/jvm/jvmMain/kotlin")
             dependencies {
                 implementation(libs.ktor.client.java)
             }
@@ -227,30 +230,16 @@ kotlin {
 
 dependencies {
     add("kspCommonMainMetadata", project(":multipaz-cbor-rpc"))
+    // Generate CBOR/RPC code for the JVM compilation (Cloud Run builds are JVM-only).
+    // In KMP+KSP, the *task* is typically `kspKotlinJvm`, while the *configuration* is `kspJvm`.
+    add("kspJvm", project(":multipaz-cbor-rpc"))
     add("kspJvmTest", project(":multipaz-cbor-rpc"))
 }
 
-// Ensure common KSP runs before all Kotlin compiles.
-// Use afterEvaluate to ensure KSP task is registered before we configure dependencies.
-afterEvaluate {
-    // Find the KSP task using matching - returns a TaskCollection that works with dependsOn
-    // even if the task doesn't exist yet (the collection will be empty but dependsOn handles that)
-    val kspTaskName = "kspCommonMainKotlinMetadata"
-    val kspTasks = tasks.matching { it.name == kspTaskName }
-    
-    // Handle both KotlinCompile (JVM/Android) and KotlinNativeCompile (iOS/Native) tasks.
-    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().all {
-        if (name != kspTaskName) {
-            dependsOn(kspTasks)
-        }
-    }
-
-    // Also handle KotlinNativeCompile tasks (iOS targets on macOS)
-    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile>().all {
-        if (name != kspTaskName) {
-            dependsOn(kspTasks)
-        }
-    }
+// Ensure KSP runs before JVM compilation.
+// Cloud Run builds are JVM-only, so wiring `compileKotlinJvm -> kspKotlinJvm` is the most robust fix.
+tasks.matching { it.name == "compileKotlinJvm" }.configureEach {
+    dependsOn("kspKotlinJvm")
 }
 
 tasks.withType<Test> {

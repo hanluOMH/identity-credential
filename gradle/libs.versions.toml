@@ -18,7 +18,9 @@ kotlinx-datetime = "0.7.1"
 kotlinx-serialization = "1.9.0"
 bouncy-castle = "1.83"
 tink = "1.19.0"
-ksp = "2.3.3"
+# KSP version must match the Kotlin compiler version used by the build.
+# With Kotlin 2.2.21, use the corresponding KSP release tag.
+ksp = "2.2.21-2.0.4"
 androidx-biometrics = "1.2.0-alpha05"
 uiToolingPreview = "1.9.5"
 volley = "1.2.1"
