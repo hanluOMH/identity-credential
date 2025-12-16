@@ -274,7 +274,10 @@ afterEvaluate {
     val kspTasks = tasks.matching { it.name.startsWith("ksp") && 
         (it.name.contains("CommonMain") || it.name.contains("Metadata") || it.name.contains("Jvm")) }
     
-    if (kspTasks.isEmpty) {
+    // Convert to list to check if empty (TaskCollection doesn't have isEmpty property)
+    val kspTasksList = kspTasks.toList()
+    
+    if (kspTasksList.isEmpty()) {
         // Only warn if we have KSP dependencies configured but no tasks
         val hasKspDependency = configurations.findByName("kspCommonMainMetadata") != null || 
                                configurations.findByName("kspJvm") != null
@@ -287,6 +290,7 @@ afterEvaluate {
         }
     } else {
         // Make all compilation tasks depend on found KSP tasks
+        // Use the TaskCollection (kspTasks) for dependsOn as it accepts TaskCollection
         tasks.withType<KotlinCompile>().configureEach {
             if (!name.startsWith("ksp")) {
                 dependsOn(kspTasks)
@@ -310,6 +314,7 @@ afterEvaluate {
     tasks.withType<KotlinCompile>().configureEach {
         if (!name.startsWith("ksp")) {
             doFirst {
+                val buildDir = layout.buildDirectory.get().asFile
                 val metadataDir = file("$buildDir/generated/ksp/metadata/commonMain/kotlin")
                 val jvmDir = file("$buildDir/generated/ksp/jvm/jvmMain/kotlin")
                 val hasMetadataGenerated = (metadataDir.exists() && 
