@@ -113,6 +113,7 @@ kotlin {
 
     sourceSets {
         val commonMain by getting {
+            // KSP generated sources for commonMain (metadata compilation).
             kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
             dependencies {
                 implementation(libs.kotlinx.io.bytestring)
@@ -131,6 +132,7 @@ kotlin {
         }
 
         val commonTest by getting {
+            // KSP generated sources for commonTest (metadata compilation).
             kotlin.srcDir("build/generated/ksp/metadata/commonTest/kotlin")
             dependencies {
                 implementation(libs.bouncy.castle.bcprov)
@@ -150,9 +152,13 @@ kotlin {
 
         val jvmMain by getting {
             dependsOn(javaSharedMain)
-            // Include KSP output for the JVM target. This is the most reliable path for Cloud Run builds
-            // because it doesn't depend on the metadata KSP task being present/executed.
+            // Include KSP output for the JVM target.
+            //
+            // NOTE: KSP output folder names vary across KSP/Kotlin versions and Gradle plugins.
+            // Cloud Run failures indicate generated sources are not being seen, so we include the common variants.
             kotlin.srcDir("build/generated/ksp/jvm/jvmMain/kotlin")
+            kotlin.srcDir("build/generated/ksp/jvmMain/kotlin")
+            kotlin.srcDir("build/generated/ksp/kotlinJvm/jvmMain/kotlin")
             dependencies {
                 implementation(libs.ktor.client.java)
             }
@@ -236,11 +242,21 @@ dependencies {
     add("kspJvmTest", project(":multipaz-cbor-rpc"))
 }
 
-// Ensure KSP runs before JVM compilation.
-// Cloud Run builds are JVM-only, so wiring `compileKotlinJvm -> kspKotlinJvm` is the most robust fix.
-tasks.matching { it.name == "compileKotlinJvm" }.configureEach {
-    dependsOn("kspKotlinJvm")
-}
+// Ensure KSP runs before compilation.
+//
+// Root cause on Cloud Run: Kotlin compilation happens without the KSP-generated sources present.
+// To fix this deterministically, wire the compile tasks to depend on the KSP tasks (using matching collections
+// so the build doesn't fail if a task isn't present for a given host/target).
+val kspCommonMain = tasks.matching { it.name == "kspCommonMainKotlinMetadata" }
+val kspJvmMain = tasks.matching { it.name == "kspKotlinJvm" }
+
+// Metadata compile needs commonMain KSP output.
+tasks.matching { it.name == "compileKotlinMetadata" || it.name == "compileCommonMainKotlinMetadata" }
+    .configureEach { dependsOn(kspCommonMain) }
+
+// JVM compile needs both: commonMain generated code and JVM-specific generated code.
+tasks.matching { it.name == "compileKotlinJvm" }
+    .configureEach { dependsOn(kspCommonMain, kspJvmMain) }
 
 tasks.withType<Test> {
     testLogging {
