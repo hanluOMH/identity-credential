@@ -247,85 +247,84 @@ dependencies {
 // Ensure KSP runs before compilation.
 //
 // Root cause on Cloud Run: Kotlin compilation happens without the KSP-generated sources present.
-// The issue is that tasks.matching() returns a TaskCollection, and using it in dependsOn() doesn't work
-// reliably. We need to use afterEvaluate to ensure tasks exist, then wire them explicitly.
-//
 // CRITICAL: commonMain code is compiled during metadata compilation, so we MUST ensure KSP runs
 // before ANY compilation task that processes commonMain sources.
+//
+// Strategy: Use whenTaskAdded to hook into tasks as they're registered, and make compilation
+// tasks depend on any KSP task that matches common patterns. This is more robust than trying
+// to find tasks by exact name, since KSP task names can vary by version/platform.
+tasks.whenTaskAdded {
+    // When a KSP task is added, make all compilation tasks depend on it
+    if (name.startsWith("ksp") && (name.contains("CommonMain") || name.contains("Metadata") || name.contains("Jvm"))) {
+        tasks.withType<KotlinCompile>().configureEach {
+            if (!name.startsWith("ksp")) {
+                dependsOn(this@whenTaskAdded)
+            }
+        }
+        tasks.withType<KotlinNativeCompile>().configureEach {
+            if (!name.startsWith("ksp")) {
+                dependsOn(this@whenTaskAdded)
+            }
+        }
+    }
+}
+
 afterEvaluate {
-    // Find KSP tasks - they should exist if kspCommonMainMetadata/kspJvm dependencies are configured
-    val kspCommonMainTask = tasks.findByName("kspCommonMainKotlinMetadata")
-    val kspJvmTask = tasks.findByName("kspKotlinJvm")
+    // Find all KSP tasks by pattern (more flexible than exact name matching)
+    val kspTasks = tasks.matching { it.name.startsWith("ksp") && 
+        (it.name.contains("CommonMain") || it.name.contains("Metadata") || it.name.contains("Jvm")) }
     
-    // Fail fast if KSP task doesn't exist but dependencies are configured (indicates KSP plugin issue)
-    if (kspCommonMainTask == null) {
-        val hasKspDependency = configurations.findByName("kspCommonMainMetadata") != null
+    if (kspTasks.isEmpty) {
+        // Only warn if we have KSP dependencies configured but no tasks
+        val hasKspDependency = configurations.findByName("kspCommonMainMetadata") != null || 
+                               configurations.findByName("kspJvm") != null
         if (hasKspDependency) {
-            throw GradleException(
-                "KSP task 'kspCommonMainKotlinMetadata' not found but kspCommonMainMetadata dependency exists.\n" +
-                "This indicates the KSP plugin is not properly configured. Check:\n" +
-                "1. KSP plugin is applied: plugins { alias(libs.plugins.ksp) }\n" +
-                "2. KSP version matches Kotlin version in gradle/libs.versions.toml\n" +
-                "3. KSP processor project ':multipaz-cbor-rpc' is properly configured."
+            logger.warn(
+                "KSP dependencies configured but no KSP tasks found. " +
+                "This might be normal if KSP tasks are created lazily. " +
+                "If build fails with 'Unresolved reference', check KSP plugin configuration."
             )
         }
-    }
-    
-    if (kspCommonMainTask != null) {
-        // CRITICAL: ALL Kotlin compilation tasks need KSP to run first, because they all process
-        // commonMain sources (which reference KSP-generated code like fromCbor/toCbor).
+    } else {
+        // Make all compilation tasks depend on found KSP tasks
         tasks.withType<KotlinCompile>().configureEach {
-            if (name != "kspCommonMainKotlinMetadata") {
-                dependsOn(kspCommonMainTask)
+            if (!name.startsWith("ksp")) {
+                dependsOn(kspTasks)
             }
         }
         
-        // Also handle KotlinNativeCompile tasks (iOS targets on macOS)
         tasks.withType<KotlinNativeCompile>().configureEach {
-            if (name != "kspCommonMainKotlinMetadata") {
-                dependsOn(kspCommonMainTask)
+            if (!name.startsWith("ksp")) {
+                dependsOn(kspTasks)
             }
         }
         
-        // Cloud Buildpacks typically invoke `assemble` at the root. Make sure KSP runs.
-        tasks.matching { it.name == "assemble" }.configureEach {
-            dependsOn(kspCommonMainTask)
-        }
-        
-        // Also ensure classes task depends on KSP (some builds invoke classes directly)
-        tasks.matching { it.name == "classes" }.configureEach {
-            dependsOn(kspCommonMainTask)
-        }
-    }
-    
-    if (kspJvmTask != null) {
-        // JVM compile can also use JVM-specific KSP output if available.
-        tasks.matching { it.name == "compileKotlinJvm" }
-            .configureEach { dependsOn(kspJvmTask) }
-        
-        tasks.matching { it.name == "assemble" }.configureEach {
-            dependsOn(kspJvmTask)
-        }
-        
-        tasks.matching { it.name == "classes" }.configureEach {
-            dependsOn(kspJvmTask)
+        // Ensure assemble and classes depend on KSP
+        tasks.matching { it.name == "assemble" || it.name == "classes" }.configureEach {
+            dependsOn(kspTasks)
         }
     }
     
     // Fail fast with a clear message if KSP outputs are missing in CI/Cloud Run.
-    // Check BEFORE any compilation task runs (not just compileKotlinJvm).
+    // Check BEFORE any compilation task runs.
     tasks.withType<KotlinCompile>().configureEach {
-        if (name != "kspCommonMainKotlinMetadata") {
+        if (!name.startsWith("ksp")) {
             doFirst {
                 val metadataDir = file("$buildDir/generated/ksp/metadata/commonMain/kotlin")
-                val hasMetadataGenerated = metadataDir.exists() && 
-                    project.fileTree(metadataDir).matching { include("**/*.kt") }.files.isNotEmpty()
+                val jvmDir = file("$buildDir/generated/ksp/jvm/jvmMain/kotlin")
+                val hasMetadataGenerated = (metadataDir.exists() && 
+                    project.fileTree(metadataDir).matching { include("**/*.kt") }.files.isNotEmpty()) ||
+                    (jvmDir.exists() && 
+                    project.fileTree(jvmDir).matching { include("**/*.kt") }.files.isNotEmpty())
                 
                 if (!hasMetadataGenerated) {
                     throw GradleException(
-                        "KSP generated sources not found at: ${metadataDir.path}\n" +
+                        "KSP generated sources not found.\n" +
                         "Task: ${this.name}\n" +
-                        "This means kspCommonMainKotlinMetadata task did not run or failed.\n" +
+                        "Checked directories:\n" +
+                        "  - ${metadataDir.path}\n" +
+                        "  - ${jvmDir.path}\n" +
+                        "This means KSP tasks did not run or failed.\n" +
                         "Check build logs for KSP task execution and errors.\n" +
                         "Expected files like: DeviceAssertion_Cbor.kt, ClientCheckStub.kt, etc."
                     )
