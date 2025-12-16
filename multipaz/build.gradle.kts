@@ -230,17 +230,19 @@ dependencies {
     add("kspJvmTest", project(":multipaz-cbor-rpc"))
 }
 
-// Ensure common KSP runs before metadata/JVM/iOS compiles (task collection is live/lazy).
-val kspCommonMain = tasks.matching { it.name == "kspCommonMainKotlinMetadata" }
+// Ensure common KSP runs before all Kotlin compiles.
+// This approach is more robust than matching specific task names.
+// Handle both KotlinCompile (JVM/Android) and KotlinNativeCompile (iOS/Native) tasks.
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().all {
+    if (name != "kspCommonMainKotlinMetadata") {
+        dependsOn("kspCommonMainKotlinMetadata")
+    }
+}
 
-tasks.matching { it.name == "compileKotlinMetadata" || it.name == "compileCommonMainKotlinMetadata" }
-    .configureEach { dependsOn(kspCommonMain) }
-
-tasks.named("compileKotlinJvm").configure { dependsOn(kspCommonMain) }
-
-tasks.configureEach {
-    if (name == "compileDebugKotlinAndroid" || name == "compileReleaseKotlinAndroid") {
-        dependsOn(kspCommonMain)
+// Also handle KotlinNativeCompile tasks (iOS targets on macOS)
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile>().all {
+    if (name != "kspCommonMainKotlinMetadata") {
+        dependsOn("kspCommonMainKotlinMetadata")
     }
 }
 
@@ -248,13 +250,6 @@ tasks.withType<Test> {
     testLogging {
         exceptionFormat = TestExceptionFormat.FULL
     }
-}
-
-// Only wire iOS compile tasks on macOS (otherwise these tasks don't exist)
-if (HostManager.hostIsMac) {
-    tasks.named("compileKotlinIosX64").configure { dependsOn(kspCommonMain) }
-    tasks.named("compileKotlinIosArm64").configure { dependsOn(kspCommonMain) }
-    tasks.named("compileKotlinIosSimulatorArm64").configure { dependsOn(kspCommonMain) }
 }
 
 // Configure Android only when SDK is available. Use typed extension configuration
