@@ -33,11 +33,11 @@ val androidSdkAvailable =
 
 // Only exclude these tasks if multipaz-compose project is included
 if (androidSdkAvailable) {
-    startParameter.excludedTaskNames +=
-        listOf(
-            ":multipaz-compose:testDebugUnitTest",
-            ":multipaz-compose:testReleaseUnitTest"
-        )
+startParameter.excludedTaskNames +=
+    listOf(
+        ":multipaz-compose:testDebugUnitTest",
+        ":multipaz-compose:testReleaseUnitTest"
+    )
 }
 
 pluginManagement {
@@ -82,7 +82,7 @@ include(":multipaz:SwiftBridge")
 include(":multipaz-dcapi")
 include(":multipaz-doctypes")
 if (androidSdkAvailable) {
-    include(":multipaz-android-legacy")
+include(":multipaz-android-legacy")
     include(":multipaz-dcapi:matcherTest")
     include(":multipaz-compose")
     include(":samples:testapp")
@@ -96,5 +96,5 @@ include(":multipaz-verifier-server")
 include(":multipaz-csa-server")
 include(":multipaz-records-server")
 if (androidSdkAvailable) {
-    include(":xcframework")
+include(":xcframework")
 }

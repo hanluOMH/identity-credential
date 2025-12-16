@@ -58,29 +58,29 @@ kotlin {
     jvm()
 
     if (androidSdkAvailable) {
-        androidTarget {
-            @OptIn(ExperimentalKotlinGradlePluginApi::class)
-            compilerOptions {
-                jvmTarget.set(JvmTarget.JVM_17)
-            }
+    androidTarget {
+        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
 
-            publishLibraryVariants("release")
+        publishLibraryVariants("release")
         }
     }
 
     // iOS targets only build on macOS (Cloud Run builder is Linux).
     if (HostManager.hostIsMac) {
-        listOf(
-            iosX64(),
-            iosArm64(),
-            iosSimulatorArm64()
-        ).forEach {
-            val platform = when (it.name) {
-                "iosX64" -> "iphonesimulator"
-                "iosArm64" -> "iphoneos"
-                "iosSimulatorArm64" -> "iphonesimulator"
-                else -> error("Unsupported target ${it.name}")
-            }
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach {
+        val platform = when (it.name) {
+            "iosX64" -> "iphonesimulator"
+            "iosArm64" -> "iphoneos"
+            "iosSimulatorArm64" -> "iphonesimulator"
+            else -> error("Unsupported target ${it.name}")
+        }
             it.compilations.getByName("main") {
                 val SwiftBridge by cinterops.creating {
                     definitionFile.set(project.file("nativeInterop/cinterop/SwiftBridge-$platform.def"))
@@ -156,26 +156,26 @@ kotlin {
         }
 
         if (androidSdkAvailable) {
-            val androidMain by getting {
-                dependsOn(javaSharedMain)
-                dependencies {
-                    implementation(libs.androidx.biometrics)
-                    implementation(libs.androidx.lifecycle.viewmodel)
+        val androidMain by getting {
+            dependsOn(javaSharedMain)
+            dependencies {
+                implementation(libs.androidx.biometrics)
+                implementation(libs.androidx.lifecycle.viewmodel)
                 }
             }
         }
 
         // iOS source sets only exist when iOS targets are created (macOS builds).
         if (HostManager.hostIsMac) {
-            val iosMain by getting {
-                dependencies {
-                    // This dependency is needed for SqliteStorage implementation.
-                    // KMP-compatible version is still alpha and it is not compatible with
-                    // other androidx packages, particularly androidx.work that we use in wallet.
-                    // TODO: once compatibility issues are resolved, SqliteStorage and this
-                    // dependency can be moved into commonMain.
-                    implementation(libs.androidx.sqlite)
-                    implementation(libs.androidx.sqlite.framework)
+        val iosMain by getting {
+            dependencies {
+                // This dependency is needed for SqliteStorage implementation.
+                // KMP-compatible version is still alpha and it is not compatible with
+                // other androidx packages, particularly androidx.work that we use in wallet.
+                // TODO: once compatibility issues are resolved, SqliteStorage and this
+                // dependency can be moved into commonMain.
+                implementation(libs.androidx.sqlite)
+                implementation(libs.androidx.sqlite.framework)
                 }
             }
         }
@@ -261,35 +261,35 @@ if (HostManager.hostIsMac) {
 // to avoid Kotlin DSL accessors requiring the plugin at script compile-time.
 if (androidSdkAvailable) {
     extensions.configure<LibraryExtension>("android") {
-        namespace = "org.multipaz"
-        compileSdk = libs.versions.android.compileSdk.get().toInt()
+    namespace = "org.multipaz"
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
 
-        defaultConfig {
-            minSdk = 26
-            testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-            consumerProguardFiles("consumer-rules.pro")
+    defaultConfig {
+        minSdk = 26
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles("consumer-rules.pro")
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    packaging {
+        resources {
+            excludes += listOf("/META-INF/{AL2.0,LGPL2.1}")
+            excludes += listOf("/META-INF/versions/9/OSGI-INF/MANIFEST.MF")
         }
+    }
 
-        compileOptions {
-            sourceCompatibility = JavaVersion.VERSION_17
-            targetCompatibility = JavaVersion.VERSION_17
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
         }
+    }
 
-        packaging {
-            resources {
-                excludes += listOf("/META-INF/{AL2.0,LGPL2.1}")
-                excludes += listOf("/META-INF/versions/9/OSGI-INF/MANIFEST.MF")
-            }
-        }
-
-        publishing {
-            singleVariant("release") {
-                withSourcesJar()
-            }
-        }
-
-        testOptions {
-            unitTests.isReturnDefaultValues = true
+    testOptions {
+        unitTests.isReturnDefaultValues = true
         }
     }
 }
