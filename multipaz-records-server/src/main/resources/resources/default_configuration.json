@@ -1,5 +1,7 @@
 {
-  "server_port": 8004,
+  "server_port": 8080,
+  "base_url": "https://multipaz-records-server-971523157550.us-central1.run.app",
+  "admin_password": "multipaz-records",
   "trusted_client_assertions": {
     "bdbb8887-7cb7-4457-8a3f-1216924ed543": {
       "kty": "EC",

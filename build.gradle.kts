@@ -22,9 +22,14 @@ val projectVersionNext = "0.97.0"
 
 private fun runCommand(args: List<String>): String {
     val stdout = ByteArrayOutputStream()
-    rootProject.exec {
-        commandLine(args)
-        standardOutput = stdout
+    try {
+        rootProject.exec {
+            commandLine(args)
+            standardOutput = stdout
+            isIgnoreExitValue = true
+        }
+    } catch (e: Exception) {
+        return "0"
     }
     return stdout.toString().trim()
 }
@@ -41,9 +46,13 @@ val projectVersionName: String by extra {
     if (projectVersionNext.isEmpty()) {
         projectVersionLast
     } else {
-        val numCommitsSinceTag = runCommand(listOf("git", "rev-list", "${projectVersionLast}..", "--count"))
-        val commitHash = runCommand(listOf("git", "rev-parse", "--short", "HEAD"))
-        projectVersionNext + "-pre.${numCommitsSinceTag}.${commitHash}"
+        try {
+            val numCommitsSinceTag = runCommand(listOf("git", "rev-list", "${projectVersionLast}..", "--count"))
+            val commitHash = runCommand(listOf("git", "rev-parse", "--short", "HEAD"))
+            projectVersionNext + "-pre.${numCommitsSinceTag}.${commitHash}"
+        } catch (e: Exception) {
+            projectVersionNext + "-pre.0.unknown"
+        }
     }
 }
 

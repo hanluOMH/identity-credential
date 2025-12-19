@@ -1,5 +1,7 @@
 {
-  "server_port": 8007,
+  "server_port": 8080,
+  "base_url": "https://multipaz-openid4vci-server-971523157550.us-central1.run.app",
+  "system_of_record_url": "https://multipaz-records-server-971523157550.us-central1.run.app",
   "trusted_client_assertions": {
     "895b72b9-0808-4fcc-bb19-960d14a9e28f": {
       "kty": "EC",
