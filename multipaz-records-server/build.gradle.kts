@@ -38,6 +38,7 @@ dependencies {
     implementation(libs.hsqldb)
     implementation(libs.mysql)
     implementation(libs.postgresql)
+    implementation(libs.cloud.sql.postgres.socket.factory)
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.java)
     implementation(libs.ktor.server.netty)
