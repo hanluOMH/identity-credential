@@ -45,10 +45,10 @@
   "system_of_record_jwk": {
     "kty": "EC",
     "alg": "ES256",
-    "kid": "bdbb8887-7cb7-4457-8a3f-1216924ed543",
+    "kid": "3b618c99-b21c-4fc3-a3d4-6d8be4993b6a",
     "crv": "P-256",
-    "x": "tvNovlSdvTIjUW4okuSmeMiM7egvRLaj8W45MVXEM8Y",
-    "y": "L0AQ7DU9f6kyYdrJZlCfD0LjhoXQtX7lmfubjjIdLCg",
-    "d": "lYmbuSV3m7XwvDfU8xAkWRlNUPd_lWGXMEtslR_fFxI"
+    "x": "09joHi4eb0ChC4I_7C8hWrQZ9PTcqXmWPjOFxZqwu5U",
+    "y": "3rpf-OZnKfLbeA0M_8fiRd2vFCh5qpSIlxumjVHr_lM",
+    "d": "6IN0dgT6VaNjfJWfNyUr_CKlRiEtPitUv-X5kAIf7Ts"
   }
 }
