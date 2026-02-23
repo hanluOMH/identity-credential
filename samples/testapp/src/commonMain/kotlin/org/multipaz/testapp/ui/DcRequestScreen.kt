@@ -187,7 +187,7 @@ fun DcRequestScreen(
         item {
             ComboBox(
                 headline = "Claims to request",
-                availableRequests = requestOptions,
+                options = requestOptions,
                 comboBoxSelected = requestSelected,
                 comboBoxExpanded = requestDropdownExpanded,
                 getDisplayName = { it.displayName },
@@ -197,7 +197,7 @@ fun DcRequestScreen(
         item {
             ComboBox(
                 headline = "W3C Digital Credentials Protocol(s)",
-                availableRequests = protocolOptions,
+                options = protocolOptions,
                 comboBoxSelected = protocolSelected,
                 comboBoxExpanded = protocolDropdownExpanded,
                 getDisplayName = { it.displayName },
@@ -207,7 +207,7 @@ fun DcRequestScreen(
         item {
             ComboBox(
                 headline = "Credential Format",
-                availableRequests = formatOptions,
+                options = formatOptions,
                 comboBoxSelected = formatSelected,
                 comboBoxExpanded = formatDropdownExpanded,
                 getDisplayName = { it.displayName },
