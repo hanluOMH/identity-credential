@@ -432,6 +432,42 @@ object Aadhaar {
                 Icon.CALENDAR_CLOCK,
                 LocalDate.parse(SampleData.EXPIRY_DATE).toDataItemFullDate()
             )
+            .addSampleRequest(
+                id = "age_over_18",
+                displayName = "Age over 18",
+                mdocDataElements = mapOf(
+                    AADHAAR_NAMESPACE to mapOf(
+                        "age_above18" to false,
+                    )
+                )
+            )
+            .addSampleRequest(
+                id = "age_over_18_zkp",
+                displayName ="Age over 18 (ZKP)",
+                mdocDataElements = mapOf(
+                    AADHAAR_NAMESPACE to mapOf(
+                        "age_above18" to false,
+                    )
+                ),
+                mdocUseZkp = true
+            )
+            .addSampleRequest(
+                id = "age_over_18_and_portrait",
+                displayName = "Age over 18 + portrait",
+                mdocDataElements = mapOf(
+                    AADHAAR_NAMESPACE to mapOf(
+                        "age_above18" to false,
+                        "resident_image" to false,
+                    )
+                )
+            )
+            .addSampleRequest(
+                id = "full",
+                displayName = "All data elements",
+                mdocDataElements = mapOf(
+                    AADHAAR_NAMESPACE to mapOf()
+                )
+            )
             .build()
     }
 }
