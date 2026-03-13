@@ -14,6 +14,7 @@ import org.multipaz.crypto.EcPublicKey
 import org.multipaz.crypto.EcPublicKeyDoubleCoordinate
 import org.multipaz.crypto.JsonWebEncryption
 import org.multipaz.documenttype.DocumentTypeRepository
+import org.multipaz.documenttype.knowntypes.Aadhaar
 import org.multipaz.documenttype.knowntypes.DrivingLicense
 import org.multipaz.documenttype.knowntypes.EUCertificateOfResidence
 import org.multipaz.documenttype.knowntypes.EUPersonalID
@@ -344,6 +345,7 @@ private val documentTypeRepo: DocumentTypeRepository by lazy {
     repo.addDocumentType(IDPass.getDocumentType())
     repo.addDocumentType(AgeVerification.getDocumentType())
     repo.addDocumentType(Loyalty.getDocumentType())
+    repo.addDocumentType(Aadhaar.getDocumentType())
     repo
 }
 

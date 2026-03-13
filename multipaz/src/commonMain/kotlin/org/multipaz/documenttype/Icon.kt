@@ -33,5 +33,9 @@ enum class Icon(
     HOUSE("house"),
     FLAG("flag"),
     APARTMENT("apartment"),
-    LANGUAGE_JAPANESE_KANA("language_japanese_kana")
+    LANGUAGE_JAPANESE_KANA("language_japanese_kana"),
+    PHONE("phone"),
+    EMAIL("alternate_email"),
+    BADGE("badge"),
+    GLOBE("globe")
 }

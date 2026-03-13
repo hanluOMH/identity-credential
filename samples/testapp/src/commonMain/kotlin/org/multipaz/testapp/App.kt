@@ -84,6 +84,7 @@ import org.multipaz.digitalcredentials.getDefault
 import org.multipaz.document.DocumentStore
 import org.multipaz.document.buildDocumentStore
 import org.multipaz.documenttype.DocumentTypeRepository
+import org.multipaz.documenttype.knowntypes.Aadhaar
 import org.multipaz.documenttype.knowntypes.AgeVerification
 import org.multipaz.documenttype.knowntypes.DrivingLicense
 import org.multipaz.documenttype.knowntypes.EUPersonalID
@@ -341,6 +342,7 @@ class App private constructor (val promptModel: PromptModel) {
 
     private suspend fun documentTypeRepositoryInit() {
         documentTypeRepository = DocumentTypeRepository()
+        documentTypeRepository.addDocumentType(Aadhaar.getDocumentType())
         documentTypeRepository.addDocumentType(DrivingLicense.getDocumentType())
         documentTypeRepository.addDocumentType(PhotoID.getDocumentType())
         documentTypeRepository.addDocumentType(EUPersonalID.getDocumentType())
