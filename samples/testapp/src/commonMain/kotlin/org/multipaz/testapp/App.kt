@@ -92,7 +92,7 @@ import org.multipaz.documenttype.knowntypes.IDPass
 import org.multipaz.documenttype.knowntypes.Loyalty
 import org.multipaz.documenttype.knowntypes.PhotoID
 import org.multipaz.documenttype.knowntypes.UtopiaMovieTicket
-import org.multipaz.eventlog.EventLog
+import org.multipaz.eventlogger.SimpleEventLogger
 import org.multipaz.mdoc.util.MdocUtil
 import org.multipaz.mdoc.zkp.ZkSystemRepository
 import org.multipaz.mdoc.zkp.longfellow.LongfellowZkSystem
@@ -125,7 +125,7 @@ import org.multipaz.testapp.ui.DcRequestScreen
 import org.multipaz.testapp.ui.VerticalDocumentListScreen
 import org.multipaz.testapp.ui.DocumentStoreScreen
 import org.multipaz.testapp.ui.DocumentViewerScreen
-import org.multipaz.testapp.ui.EventLogScreen
+import org.multipaz.testapp.ui.EventLoggerScreen
 import org.multipaz.testapp.ui.EventViewerScreen
 import org.multipaz.testapp.ui.IsoMdocMultiDeviceTestingScreen
 import org.multipaz.testapp.ui.IsoMdocProximityReadingScreen
@@ -231,7 +231,7 @@ class App private constructor (val promptModel: PromptModel) {
             documentStore = documentStore,
             documentTypeRepository = documentTypeRepository,
             zkSystemRepository = zkSystemRepository,
-            eventLog = eventLog,
+            eventLogger = eventLogger,
             showConsentPromptFn = if (settingsModel.presentmentShowConsentPrompt.value) {
                 ::promptModelRequestConsent
             } else {
@@ -779,10 +779,15 @@ class App private constructor (val promptModel: PromptModel) {
         }
     }
     
-    lateinit var eventLog: EventLog
+    lateinit var eventLogger: SimpleEventLogger
 
     private suspend fun eventLoggerInit() {
-        eventLog = EventLog(storage = TestAppConfiguration.storage)
+        eventLogger = SimpleEventLogger(
+            storage = TestAppConfiguration.storage,
+            onAddEvent = { event ->
+                emptyMap()
+            }
+        )
     }
 
     private suspend fun digitalCredentialsReregister() {
@@ -1600,8 +1605,8 @@ class App private constructor (val promptModel: PromptModel) {
                 }
                 composable<EventLogDestination> { backStackEntry ->
                     // Note: EventLogScreen has its own AppBar
-                    EventLogScreen(
-                        eventLog = eventLog,
+                    EventLoggerScreen(
+                        eventLogger = eventLogger,
                         imageLoader = imageLoader,
                         documentModel = documentModel,
                         onEventClicked = { event ->
@@ -1615,7 +1620,7 @@ class App private constructor (val promptModel: PromptModel) {
                     val destination = backStackEntry.toRoute<EventViewerDestination>()
                     // Note: EventViewerScreen has its own AppBar
                     EventViewerScreen(
-                        eventLog = eventLog,
+                        eventLogger = eventLogger,
                         eventId = destination.eventId,
                         documentTypeRepository = documentTypeRepository,
                         documentModel = documentModel,
