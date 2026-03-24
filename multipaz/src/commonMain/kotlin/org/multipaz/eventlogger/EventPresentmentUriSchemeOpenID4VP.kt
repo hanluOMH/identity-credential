@@ -27,7 +27,7 @@ data class EventPresentmentUriSchemeOpenID4VP(
     val origin: String?,
     val requestJwt: String,
     val vpToken: String,
-    val redirectUri: String
+    val redirectUri: String?
 ): EventPresentment(identifier, timestamp, appData, presentmentData) {
     override fun copy(identifier: String, timestamp: Instant, appData: Map<String, DataItem>): Event = copy(
         identifier = identifier,

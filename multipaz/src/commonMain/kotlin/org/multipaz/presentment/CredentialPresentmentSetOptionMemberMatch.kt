@@ -16,6 +16,7 @@ import org.multipaz.request.RequestedClaim
 data class CredentialPresentmentSetOptionMemberMatch(
     val credential: Credential,
     val claims: Map<RequestedClaim, Claim>,
-    val source: CredentialMatchSource
+    val source: CredentialMatchSource,
+    val transactionData: List<TransactionData>
 )
 

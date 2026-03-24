@@ -70,14 +70,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.LinkAnnotation
-import androidx.compose.ui.text.LinkInteractionListener
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextLinkStyles
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
@@ -117,6 +111,7 @@ import org.multipaz.multipaz_compose.generated.resources.credential_presentment_
 import org.multipaz.multipaz_compose.generated.resources.credential_presentment_share_and_stored_by_unknown_requester
 import org.multipaz.multipaz_compose.generated.resources.credential_presentment_share_with_known_requester
 import org.multipaz.multipaz_compose.generated.resources.credential_presentment_share_with_unknown_requester
+import org.multipaz.multipaz_compose.generated.resources.credential_presentment_transaction_data
 import org.multipaz.multipaz_compose.generated.resources.credential_presentment_verifier_icon_description
 import org.multipaz.multipaz_compose.generated.resources.credential_presentment_warning_verifier_not_in_trust_list
 import org.multipaz.multipaz_compose.generated.resources.credential_presentment_warning_verifier_not_in_trust_list_anonymous
@@ -823,6 +818,31 @@ private fun CredentialSetViewer(
             } else {
                 stringResource(Res.string.credential_presentment_share_and_stored_by_unknown_requester)
             }
+
+        val transactionData = combinationElement.matches[matchNum].transactionData
+        if (transactionData.isNotEmpty()) {
+            // Fallback transaction data display; once we have transaction data registry, we should
+            // have per-transaction-type UI. If a transaction type is not supported we will want
+            // to filter it out before even displaying the consent prompt.
+            entries.add {
+                Column {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = stringResource(Res.string.credential_presentment_transaction_data),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    for (data in transactionData) {
+                        Text(
+                            modifier = Modifier.fillMaxWidth(),
+                            text = data.type,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
 
         entries.add {
             if (storedClaims.size == 0) {

@@ -18,19 +18,26 @@ import kotlinx.io.bytestring.encodeToByteString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
+import kotlinx.serialization.json.longOrNull
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
 import org.multipaz.cbor.Bstr
 import org.multipaz.cbor.Cbor
+import org.multipaz.cbor.CborArray
+import org.multipaz.cbor.CborDouble
+import org.multipaz.cbor.CborMap
 import org.multipaz.cbor.DataItem
 import org.multipaz.cbor.Nint
 import org.multipaz.cbor.Simple
@@ -40,6 +47,8 @@ import org.multipaz.cbor.Uint
 import org.multipaz.cbor.addCborArray
 import org.multipaz.cbor.addCborMap
 import org.multipaz.cbor.buildCborArray
+import org.multipaz.cbor.buildCborMap
+import org.multipaz.cbor.toDataItem
 import org.multipaz.crypto.Algorithm
 import org.multipaz.crypto.AsymmetricKey
 import org.multipaz.crypto.Crypto
@@ -47,7 +56,9 @@ import org.multipaz.crypto.Hpke
 import org.multipaz.crypto.JsonWebEncryption
 import org.multipaz.mdoc.response.DeviceResponse
 import org.multipaz.openid.OpenID4VP
-import org.multipaz.openid.TransactionData
+import org.multipaz.presentment.TransactionData
+import org.multipaz.presentment.TransactionDataCbor
+import org.multipaz.presentment.TransactionDataJson
 import org.multipaz.rpc.backend.BackendEnvironment
 import org.multipaz.rpc.cache
 import org.multipaz.rpc.handler.InvalidRequestException
@@ -69,6 +80,7 @@ import org.multipaz.verifier.session.RequestedClaim
 import org.multipaz.verifier.session.RequestedDocument
 import org.multipaz.verifier.session.Session
 import org.multipaz.verifier.session.TransactionDataHashes
+import org.multipaz.verifier.transaction.TransactionProcessor
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.iterator
@@ -84,22 +96,36 @@ suspend fun makeRequest(call: ApplicationCall) {
         ?: throw InvalidRequestException("'dcql.credentials' is missing or invalid")
     val exchangeProtocols = (request["protocols"] as? JsonArray)?.map { it.jsonPrimitive.content }
         ?: defaultExchangeProtocols
-    val transactionData = request["transaction_data"]?.jsonArray?.map {
-        it.toString().encodeToByteArray().toBase64Url()
-    }
+    val transactionData = request["transaction_data"]?.jsonArray
     val nonMdoc = credentials.firstOrNull {
         it.jsonObject["format"]!!.jsonPrimitive.content != "mso_mdoc"
     }
-    val protocols = if (transactionData == null && nonMdoc == null) {
+    val protocols = if (nonMdoc == null) {
         exchangeProtocols
     } else {
-        // no support for transaction data yet in org_iso_mdoc
-        // org_iso_mdoc can only handle mdoc credentials
+        // org_iso_mdoc protocol can only handle mdoc credentials
         exchangeProtocols.filter { it != "org-iso-mdoc" }
     }
+
+    if (transactionData != null) {
+        val transactionProcessor = BackendEnvironment.getInterface(TransactionProcessor::class)!!
+        for (data in transactionData) {
+            transactionProcessor.checkRequest(dcqlQuery, data.jsonObject)
+        }
+    }
+
+    val docIndexMap = credentials.mapIndexed { index, query ->
+        Pair(query.jsonObject["id"]!!.jsonPrimitive.content, index)
+    }.associate { it }
+
+    val cborTransactionData = transactionData?.map {
+        encodeTransactionDataAsCbor(it.jsonObject, docIndexMap)
+    }
+
     val (sessionId, session) = Session.createSession(
         dcqlQuery = dcqlQuery.toString(),
-        transactionData = transactionData
+        jsonTransactionData = transactionData?.map { it.toString() },
+        cborTransactionData = cborTransactionData
     )
     val encodedSessionId = encodeSessionId(sessionId)
     val dcRequest = generateRequest(
@@ -150,6 +176,9 @@ suspend fun processResponse(call: ApplicationCall) {
             responseText = responseText
         )
     }
+
+    processTransactionData(session, result)
+
     session.result = result.toString()
     Session.updateSession(sessionId, session)
     call.respondText(
@@ -196,19 +225,37 @@ suspend fun processDirectPost(call: ApplicationCall, encodedSessionId: String) {
     val result = processOpenID4VPResponseText(
         session = session,
         responseText = responseText
-    ).toString()
-    session.result = result
+    )
+    processTransactionData(session, result)
+    val serializedResult = result.toString()
+    session.result = serializedResult
     Session.updateSession(sessionId, session)
     val channels = resultChannelMutex.withLock {
         resultChannels[sessionId]?.toMutableSet() ?: setOf()
     }
     for (channel in channels) {
-        channel.trySend(result)
+        channel.trySend(serializedResult)
     }
     call.respondText(
         contentType = ContentType.Application.Json,
         text = "{}"
     )
+}
+
+private suspend fun processTransactionData(session: Session, result: JsonObject) {
+    if (session.jsonTransactionData != null) {
+        val transactionProcessor = BackendEnvironment.getInterface(TransactionProcessor::class)!!
+        val dcql = Json.parseToJsonElement(session.dcqlQuery).jsonObject
+        for (data in session.jsonTransactionData) {
+            transactionProcessor.processResponse(
+                dcql = dcql,
+                transactionData = Json.parseToJsonElement(data).jsonObject,
+                responseProtocol = session.responseProtocol!!,
+                response = session.response!!,
+                result = result
+            )
+        }
+    }
 }
 
 suspend fun getResult(call: ApplicationCall, encodedSessionId: String) {
@@ -260,7 +307,8 @@ private suspend fun generateRequest(
         VerificationUtil.generateDcRequestDcql(
             exchangeProtocols = exchangeProtocols,
             dcql = query,
-            transactionData = session.transactionData ?: listOf(),
+            jsonTransactionData = session.jsonTransactionData ?: listOf(),
+            cborTransactionData = session.cborTransactionData ?: listOf(),
             nonce = session.nonce,
             origin = baseUrl,
             clientId = getClientId(),
@@ -282,7 +330,7 @@ private suspend fun generateRequest(
                 null
             },
             dclqQuery = Json.parseToJsonElement(session.dcqlQuery).jsonObject,
-            transactionData = session.transactionData ?: listOf()
+            jsonTransactionData = session.jsonTransactionData ?: listOf()
         )
     }
 }
@@ -340,7 +388,7 @@ private suspend fun processOpenID4VPResponseText(
                         documentRequests = listOf(documentRequest)
                     )
                     check(responses.size == 1)
-                    Pair(responses.first(), null)
+                    responses.first()
                 } else {
                     processSdJwtResponse(
                         credentialResponse = responseText,
@@ -364,12 +412,12 @@ private suspend fun processOpenID4VPResponseText(
     }
 
     // Validate that transaction data got acknowledged in the response
-    if (session.transactionData == null) {
-        // No transaction data hashes most have been embedded in the response
+    if (session.jsonTransactionData == null) {
+        // No transaction data hashes must have been embedded in the response
         check(transactionDataHashMap.isEmpty())
     } else {
-        val transactionDataMap = TransactionData.parse(
-            transactionData = session.transactionData,
+        val transactionDataMap = TransactionDataJson.parse(
+            transactionData = session.jsonTransactionData.map { it.toByteArray().toBase64Url() },
             hashAlgorithmOverrides = transactionDataHashMap.mapValues { (_, transactionDataHashes) ->
                 transactionDataHashes.hashAlgorithm
             }
@@ -435,16 +483,43 @@ private suspend fun processIsoMdocResponse(
     val requestedDocuments = extractRequestedDocuments(
         dcql = Json.parseToJsonElement(session.dcqlQuery).jsonObject
     )
+
     // In ISO world document ids are not used and responses rely on document index
     // TODO: it is not clear how this would work when there are document sets.
-    val jsonResponses = processMdocResponse(
+
+    val responses = processMdocResponse(
         credentialResponse = Cbor.decode(deviceResponseRaw),
         mdocSessionTranscript = sessionTranscript,
         documentRequests = requestedDocuments
     )
+
+    // Validate that transaction data got acknowledged in the response
+    if (session.cborTransactionData == null) {
+        // No transaction data hashes must have been embedded in the response
+        for (response in responses) {
+            check(response.second == null)
+        }
+    } else {
+        val transactionDataMap = TransactionDataCbor.parse(
+            transactionData = session.cborTransactionData.map { it.toByteArray().toDataItem() }
+        )
+        for ((index, response) in responses.withIndex()) {
+            val transactionDataHashes = response.second
+            val transactionDataList = transactionDataMap[index]
+            if (transactionDataList == null) {
+                check(transactionDataHashes == null)
+            } else {
+                check(transactionDataList.size == transactionDataHashes!!.hashes.size)
+                for ((transactionData, hash) in transactionDataList.zip(transactionDataHashes.hashes)) {
+                    check(transactionData.hash == hash)
+                }
+            }
+        }
+    }
+
     return buildJsonObject {
-        for ((documentRequest, jsonResponse) in requestedDocuments.zip(jsonResponses)) {
-            put(documentRequest.id, jsonResponse)
+        for ((documentRequest, response) in requestedDocuments.zip(responses)) {
+            put(documentRequest.id, response.first)
         }
     }
 }
@@ -459,7 +534,7 @@ private suspend fun processMdocResponse(
     credentialResponse: DataItem,
     mdocSessionTranscript: DataItem,
     documentRequests: List<RequestedDocument>
-): List<JsonObject> {
+): List<Pair<JsonObject, TransactionDataHashes?>> {
     val trustManager = getTrustManager()
     val deviceResponse = DeviceResponse.fromDataItem(credentialResponse)
     try {
@@ -469,7 +544,7 @@ private suspend fun processMdocResponse(
         Logger.e(TAG, "Device response verification failed", err)
     }
     return deviceResponse.documents.zip(documentRequests).map { (document, request) ->
-        buildJsonObject {
+        val jsonResult = buildJsonObject {
             try {
                 val trustResult = trustManager.verify(document.issuerCertChain.certificates)
                 put("_trusted", trustResult.isTrusted)
@@ -505,6 +580,17 @@ private suspend fun processMdocResponse(
                 put(id, jsonItem)
             }
         }
+
+        val transactionDataHashes = if (document.transactionDataHashes.isEmpty()) {
+            null
+        } else {
+            TransactionDataHashes(
+                hashAlgorithm = Algorithm.SHA256,
+                hashes = document.transactionDataHashes
+            )
+        }
+
+        Pair(jsonResult, transactionDataHashes)
     }
 }
 
@@ -607,6 +693,59 @@ private fun extractRequestedDocuments(
                 )
             }
         )
+    }
+}
+
+private fun encodeTransactionDataAsCbor(
+    transactionData: JsonObject,
+    docIndexMap: Map<String, Int>
+): ByteString = ByteString(Cbor.encode(buildCborMap {
+    // TODO: we will need to encode based on the transaction data type, as JSON -> CBOR cannot
+    //  be done well without knowing the schema
+    for ((name, value) in transactionData) {
+        when (name) {
+            "credential_ids" ->
+                put(
+                    "credential_ids",
+                    CborArray(value.jsonArray.map { jsonId ->
+                        val id = jsonId.jsonPrimitive.content
+                        docIndexMap[id]?.let { Uint(it.toULong()) }
+                            ?: throw InvalidRequestException("no credential with id '$id'")
+                    }.toMutableList())
+                )
+            else -> put(name, toGenericCbor(value))
+        }
+    }
+}))
+
+private fun toGenericCbor(value: JsonElement): DataItem {
+    return when (value) {
+        is JsonNull -> Simple.NULL
+        is JsonPrimitive -> if (value.isString) {
+            Tstr(value.content)
+        } else {
+            val longValue = value.longOrNull
+            if (longValue != null) {
+                if (longValue >= 0) {
+                    Uint(longValue.toULong())
+                } else {
+                    Nint((-longValue).toULong())
+                }
+            } else {
+                val doubleValue = value.doubleOrNull
+                if (doubleValue != null) {
+                    return CborDouble(doubleValue)
+                } else when (value.content) {
+                    "true" -> Simple.TRUE
+                    "false" -> Simple.FALSE
+                    else -> throw IllegalArgumentException()
+                }
+            }
+        }
+        is JsonObject -> CborMap(value.map { (name, item) ->
+                Pair(Tstr(name), toGenericCbor(item))
+            }.associate { it }.toMutableMap())
+        is JsonArray -> CborArray(value.map(::toGenericCbor).toMutableList())
     }
 }
 

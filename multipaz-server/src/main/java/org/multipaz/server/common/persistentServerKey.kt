@@ -20,10 +20,9 @@ import kotlin.random.Random
  */
 suspend fun persistentServerKey(
     length: Int = 16,
-    name: String = "default",
-    storage: Storage? = null
+    name: String = "default"
 ): ByteString {
-    val storageToUse = storage ?: BackendEnvironment.getInterface(Storage::class)!!
+    val storageToUse = BackendEnvironment.getInterface(Storage::class)!!
     val table = storageToUse.getTable(serverKeyTableSpec)
     return serverKeyLock.withLock {
         table.get(name) ?:

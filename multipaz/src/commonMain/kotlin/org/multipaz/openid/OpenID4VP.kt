@@ -1,5 +1,6 @@
 package org.multipaz.openid
 
+import io.ktor.utils.io.core.toByteArray
 import kotlinx.io.bytestring.decodeToString
 import kotlin.time.Clock
 import kotlinx.io.bytestring.encodeToByteString
@@ -52,6 +53,8 @@ import org.multipaz.request.Requester
 import org.multipaz.sdjwt.SdJwt
 import org.multipaz.sdjwt.credential.SdJwtVcCredential
 import org.multipaz.presentment.PresentmentUnlockReason
+import org.multipaz.presentment.TransactionData
+import org.multipaz.presentment.TransactionDataJson
 import org.multipaz.util.Logger
 import org.multipaz.util.fromBase64Url
 import org.multipaz.util.toBase64Url
@@ -97,9 +100,10 @@ object OpenID4VP {
         responseMode: ResponseMode,
         responseUri: String?,
         dclqQuery: JsonObject,
-        transactionData: List<String> = emptyList()
+        jsonTransactionData: List<String> = emptyList()
     ): JsonObject {
         if (version == Version.DRAFT_24) {
+            check(jsonTransactionData.isEmpty())
             return generateRequestDraft24(
                 origin = origin,
                 clientId = clientId,
@@ -166,9 +170,9 @@ object OpenID4VP {
                     }
                 }
             }
-            if (transactionData.isNotEmpty()) {
-                put("transaction_data", JsonArray(transactionData.map {
-                    JsonPrimitive(it)
+            if (jsonTransactionData.isNotEmpty()) {
+                put("transaction_data", JsonArray(jsonTransactionData.map {
+                    JsonPrimitive(it.toByteArray().toBase64Url())
                 }))
             }
         }
@@ -421,9 +425,13 @@ object OpenID4VP {
 
         val vpTokens = mutableMapOf<String, String>()
         val dcqlQuery = DcqlQuery.fromJson(request["dcql_query"]!!.jsonObject)
+        val transactionDataMap = request["transaction_data"]?.let {
+            TransactionDataJson.parse(it)
+        } ?: emptyMap()
         val dcqlResponse = try {
             dcqlQuery.execute(
                 presentmentSource = source,
+                transactionDataMap = transactionDataMap
             )
         } catch (e: DcqlCredentialQueryException) {
             throw PresentmentCannotSatisfyRequestException("Unable to satisfy the request", e)
@@ -435,10 +443,6 @@ object OpenID4VP {
             origin = origin
         )
 
-        val transactionDataMap = request["transaction_data"]?.let {
-            TransactionData.parse(it)
-        }
-        // TODO: incorporate transaction data into the consent prompt and event logging
         val trustMetadata = source.resolveTrust(requester)
         val selection = source.showConsentPrompt(
             requester = requester,
@@ -469,7 +473,8 @@ object OpenID4VP {
                     nonce = nonce,
                     reReaderPublicKey = reReaderPublicKey,
                     responseUri = responseUri,
-                    requestIsForZk = requestIsForZk
+                    requestIsForZk = requestIsForZk,
+                    transactionData = match.transactionData
                 )
             } else if (match.source.credentialQuery.vctValues != null) {
                 openID4VPSdJwt(
@@ -479,12 +484,12 @@ object OpenID4VP {
                     clientId = clientId,
                     nonce = nonce,
                     responseMode = responseMode,
-                    transactionData = transactionDataMap?.get(match.source.credentialQuery.id)
+                    transactionData = match.transactionData
                 )
             } else {
                 throw IllegalArgumentException("Expected ISO mdoc or IETF SD-JWT, got neither")
             }
-            vpTokens.put(match.source.credentialQuery.id, credentialResponse)
+            vpTokens[match.source.credentialQuery.id] = credentialResponse
             credentialsPresented.add(match.credential)
         }
 
@@ -557,12 +562,14 @@ object OpenID4VP {
         reReaderPublicKey: EcPublicKey?,
         responseUri: String?,
         requestIsForZk: Boolean,
+        transactionData: List<TransactionData>?,
         onDocumentsInFocus: (documents: List<Document>) -> Unit = {},
     ): String {
         match.source as CredentialMatchSourceOpenID4VP
         var zkSystemMatch: ZkSystem? = null
         var zkSystemSpec: ZkSystemSpec? = null
         if (requestIsForZk) {
+            check(transactionData.isNullOrEmpty())
             val requesterSupportedZkSpecs = mutableListOf<ZkSystemSpec>()
             for (entry in match.source.credentialQuery.meta["zk_system_type"]!!.jsonArray) {
                 entry as JsonObject
@@ -664,6 +671,7 @@ object OpenID4VP {
             sessionTranscript = Cbor.decode(encodedSessionTranscript),
             credential = mdocCredential,
             requestedClaims = match.source.credentialQuery.claims as List<MdocRequestedClaim>,
+            transactionDataHashes = match.transactionData.map { it.hash },
         )
         val deviceResponse = buildDeviceResponse(
             sessionTranscript = Cbor.decode(encodedSessionTranscript),

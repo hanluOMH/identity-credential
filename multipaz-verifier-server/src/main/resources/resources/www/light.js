@@ -118,7 +118,13 @@ const examples = {
                     ]
                 }
             ]
-        }
+        },
+        "transaction_data": [
+            {
+                "type": "org.multipaz.transaction_data.test",
+                "credential_ids": ["payment"]
+            }
+        ]
     },
     "Movie ticket + EU PID age": {
         "dcql": {

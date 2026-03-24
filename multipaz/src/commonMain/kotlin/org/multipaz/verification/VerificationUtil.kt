@@ -153,7 +153,8 @@ object VerificationUtil {
      *   if this is `null` for such protocols
      * @param readerAuthenticationKey an optional key to use for reader authentication and its
      *    certificate chain.
-     * @param transactionData base64url-encoded transaction data if any.
+     * @param jsonTransactionData JSON-formatted transaction data if any.
+     * @param cborTransactionData CBOR-formatted transaction data if any.
      * @throws IllegalArgumentException if [dcql] contains features not supported by [DeviceRequest], for
      *   example a request for credentials that aren't ISO mdocs.
      * @return a [JsonObject] with the request.
@@ -167,7 +168,8 @@ object VerificationUtil {
         clientId: String?,
         responseEncryptionKey: EcPublicKey?,
         readerAuthenticationKey: AsymmetricKey.X509Compatible?,
-        transactionData: List<String> = listOf(),
+        jsonTransactionData: List<String> = listOf(),
+        cborTransactionData: List<ByteString> = listOf()
     ): JsonObject {
         val requests = exchangeProtocols.map { exchangeProtocol ->
             generateSingleRequestDcql(
@@ -178,7 +180,8 @@ object VerificationUtil {
                 clientId = clientId,
                 responseEncryptionKey = responseEncryptionKey,
                 readerAuthenticationKey = readerAuthenticationKey,
-                transactionData = transactionData
+                jsonTransactionData = jsonTransactionData,
+                cborTransactionData = cborTransactionData,
             )
         }
         return buildJsonObject {
@@ -194,7 +197,8 @@ object VerificationUtil {
         clientId: String?,
         responseEncryptionKey: EcPublicKey?,
         readerAuthenticationKey: AsymmetricKey.X509Compatible?,
-        transactionData: List<String>,
+        jsonTransactionData: List<String>,
+        cborTransactionData: List<ByteString>
     ): JsonObject = buildJsonObject {
         put("protocol", exchangeProtocol)
         when (exchangeProtocol) {
@@ -217,7 +221,7 @@ object VerificationUtil {
                         responseMode = OpenID4VP.ResponseMode.DC_API,
                         responseUri = null,
                         dclqQuery = dcql,
-                        transactionData = transactionData
+                        jsonTransactionData = jsonTransactionData
                     )
                 )
             }
@@ -225,9 +229,6 @@ object VerificationUtil {
             "org-iso-mdoc" -> {
                 if (responseEncryptionKey == null) {
                     throw IllegalArgumentException("Response encryption is mandatory for org-iso-mdoc")
-                }
-                if (transactionData.isNotEmpty()) {
-                    throw IllegalArgumentException("Transaction data is not yet supported")
                 }
                 val encryptionInfo = buildCborArray {
                     add("dcapi")
@@ -253,7 +254,8 @@ object VerificationUtil {
                 val encodedDeviceRequest = Cbor.encode(
                     buildDeviceRequestFromDcql(
                         sessionTranscript = sessionTranscript,
-                        dcql = dcql
+                        dcql = dcql,
+                        transactionData = cborTransactionData,
                         // TODO: sign individual requests with readerAuthenticationKey
                     ) {
                         if (readerAuthenticationKey != null) {

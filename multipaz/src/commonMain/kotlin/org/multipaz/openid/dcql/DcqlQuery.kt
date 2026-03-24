@@ -23,6 +23,7 @@ import org.multipaz.presentment.CredentialPresentmentSetOption
 import org.multipaz.presentment.CredentialPresentmentSetOptionMember
 import org.multipaz.presentment.CredentialPresentmentSetOptionMemberMatch
 import org.multipaz.presentment.PresentmentSource
+import org.multipaz.presentment.TransactionData
 import org.multipaz.request.JsonRequestedClaim
 import org.multipaz.request.MdocRequestedClaim
 import org.multipaz.request.RequestedClaim
@@ -110,7 +111,8 @@ data class DcqlQuery(
     @Throws(DcqlCredentialQueryException::class, CancellationException::class)
     suspend fun execute(
         presentmentSource: PresentmentSource,
-        keyAgreementPossible: List<EcCurve> = emptyList()
+        keyAgreementPossible: List<EcCurve> = emptyList(),
+        transactionDataMap: Map<String, List<TransactionData>> = emptyMap()
     ): CredentialPresentmentData {
         val credentialQueryIdToResponse = mutableMapOf<String, QueryResponse>()
         for (credentialQuery in credentialQueries) {
@@ -243,7 +245,8 @@ data class DcqlQuery(
                     matches.add(CredentialPresentmentSetOptionMemberMatch(
                         credential = match.credential,
                         claims = match.claims,
-                        source = CredentialMatchSourceOpenID4VP(credentialQuery = response.credentialQuery)
+                        source = CredentialMatchSourceOpenID4VP(credentialQuery = response.credentialQuery),
+                        transactionData = transactionDataMap[response.credentialQuery.id] ?: emptyList()
                     ))
                 }
                 val options = mutableListOf<CredentialPresentmentSetOption>()
@@ -292,7 +295,8 @@ data class DcqlQuery(
                                 matches.add(CredentialPresentmentSetOptionMemberMatch(
                                     credential = match.credential,
                                     claims = match.claims,
-                                    source = CredentialMatchSourceOpenID4VP(credentialQuery = response.credentialQuery)
+                                    source = CredentialMatchSourceOpenID4VP(credentialQuery = response.credentialQuery),
+                                    transactionData = transactionDataMap[response.credentialQuery.id] ?: emptyList()
                                 ))
                             }
                             members.add(

@@ -1,6 +1,7 @@
 package org.multipaz.presentment
 
 import org.multipaz.cbor.DataItem
+import org.multipaz.cbor.toDataItem
 import org.multipaz.crypto.EcCurve
 import org.multipaz.crypto.EcPublicKey
 import org.multipaz.document.Document
@@ -138,6 +139,7 @@ suspend fun mdocPresentment(
                 credential = match.credential as MdocCredential,
                 requestedClaims = match.claims.keys.toList() as List<MdocRequestedClaim>,
                 deviceNamespaces = buildDeviceNamespaces {},
+                transactionDataHashes = match.transactionData.map { it.hash },
                 errors = mapOf()
             )
             if (zkSystemMatch != null) {

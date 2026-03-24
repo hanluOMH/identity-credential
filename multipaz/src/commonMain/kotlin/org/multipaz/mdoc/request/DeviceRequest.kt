@@ -1,5 +1,6 @@
 package org.multipaz.mdoc.request
 
+import kotlinx.io.bytestring.ByteString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArrayBuilder
 import kotlinx.serialization.json.JsonObject
@@ -14,6 +15,7 @@ import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
 import org.multipaz.cbor.Bstr
 import org.multipaz.cbor.Cbor
+import org.multipaz.cbor.CborArray
 import org.multipaz.cbor.DataItem
 import org.multipaz.cbor.Simple
 import org.multipaz.cbor.Tagged
@@ -48,6 +50,7 @@ import org.multipaz.presentment.CredentialPresentmentSetOption
 import org.multipaz.presentment.CredentialPresentmentSetOptionMember
 import org.multipaz.presentment.CredentialPresentmentSetOptionMemberMatch
 import org.multipaz.presentment.PresentmentSource
+import org.multipaz.presentment.TransactionDataCbor
 import org.multipaz.request.MdocRequestedClaim
 import org.multipaz.request.RequestedClaim
 import org.multipaz.util.Logger
@@ -74,6 +77,7 @@ data class DeviceRequest private constructor(
     val version: String,
     val docRequests: List<DocRequest>,
     val deviceRequestInfo: DeviceRequestInfo?,
+    val transactionData: List<Bstr>?,
     private val readerAuthAll_: List<CoseSign1>
 ) {
     internal var readerAuthAllVerified: Boolean = false
@@ -193,6 +197,9 @@ data class DeviceRequest private constructor(
                 taggedItem = Bstr(Cbor.encode(it.toDataItem()))
             ))
         }
+        transactionData?.let {
+            put("transactionData", CborArray(transactionData.toMutableList()))
+        }
         if (readerAuthAll_.isNotEmpty()) {
             putCborArray("readerAuthAll") {
                 readerAuthAll_.forEach {
@@ -232,10 +239,14 @@ data class DeviceRequest private constructor(
                     emptyList()
                 }
             } ?: emptyList()
+            val transactionData = dataItem.getOrNull("transactionData")?.let {
+                it.asArray.map { elem -> elem as Bstr }
+            }
             return DeviceRequest(
                 version = version,
                 docRequests = docRequests,
                 deviceRequestInfo = deviceRequestInfo,
+                transactionData = transactionData,
                 readerAuthAll_ = readerAuthAll
             )
         }
@@ -251,6 +262,7 @@ data class DeviceRequest private constructor(
     class Builder(
         val sessionTranscript: DataItem,
         val deviceRequestInfo: DeviceRequestInfo? = null,
+        val transactionData: List<ByteString>? = null,
         val version: String? = null,
     ) {
         private val docRequests = mutableListOf<DocRequest>()
@@ -444,7 +456,10 @@ data class DeviceRequest private constructor(
                 version = versionToUse,
                 docRequests = docRequests,
                 deviceRequestInfo = deviceRequestInfo,
-                readerAuthAll_ = readerAuthAll
+                readerAuthAll_ = readerAuthAll,
+                transactionData = transactionData?.map {
+                    it.toByteArray().toDataItem()
+                }
             )
             deviceRequest.readerAuthAllVerified = true
             deviceRequest.docRequests.forEach {
@@ -457,7 +472,8 @@ data class DeviceRequest private constructor(
     private data class DocRequestMatch(
         val credential: Credential,
         val claims: Map<RequestedClaim, Claim>,
-        val docRequest: DocRequest
+        val docRequest: DocRequest,
+        val docRequestIndex: Int
     )
 
     private data class DocRequestResult(
@@ -487,9 +503,13 @@ data class DeviceRequest private constructor(
         keyAgreementPossible: List<EcCurve> = emptyList()
     ): CredentialPresentmentData {
         // First find all matches for all DocRequests
-        val docRequestResults = docRequests.map { docRequest ->
-            findMatchesForDocRequest(docRequest, presentmentSource, keyAgreementPossible)
+        val docRequestResults = docRequests.withIndex().map { (index, docRequest) ->
+            findMatchesForDocRequest(index, docRequest, presentmentSource, keyAgreementPossible)
         }
+
+        val transactionDataMap = transactionData?.let {
+            TransactionDataCbor.parse(it)
+        } ?: emptyMap()
 
         val credentialSets = mutableListOf<CredentialPresentmentSet>()
 
@@ -511,7 +531,8 @@ data class DeviceRequest private constructor(
                 CredentialPresentmentSetOptionMemberMatch(
                     credential = match.credential as MdocCredential,
                     claims = match.claims,
-                    source = CredentialMatchSourceIso18013(docRequest = match.docRequest)
+                    source = CredentialMatchSourceIso18013(docRequest = match.docRequest),
+                    transactionData = transactionDataMap[match.docRequestIndex] ?: emptyList()
                 )
             }
             val member = CredentialPresentmentSetOptionMember(memberMatches)
@@ -544,7 +565,8 @@ data class DeviceRequest private constructor(
                                 CredentialPresentmentSetOptionMemberMatch(
                                     credential = match.credential as MdocCredential,
                                     claims = match.claims,
-                                    source = CredentialMatchSourceIso18013(docRequest = match.docRequest)
+                                    source = CredentialMatchSourceIso18013(docRequest = match.docRequest),
+                                    transactionData = transactionDataMap[match.docRequestIndex] ?: emptyList()
                                 )
                             }
                             CredentialPresentmentSetOptionMember(matches)
@@ -573,6 +595,7 @@ data class DeviceRequest private constructor(
     }
 
     private suspend fun findMatchesForDocRequest(
+        docRequestIndex: Int,
         docRequest: DocRequest,
         presentmentSource: PresentmentSource,
         keyAgreementPossible: List<EcCurve>
@@ -597,7 +620,8 @@ data class DeviceRequest private constructor(
                 matches.add(DocRequestMatch(
                     credential = bestMatch.first,
                     claims = bestMatch.second,
-                    docRequest = bestMatch.third
+                    docRequest = bestMatch.third,
+                    docRequestIndex = docRequestIndex
                 ))
             }
         }
@@ -935,6 +959,7 @@ inline fun buildDeviceRequest(
 inline fun buildDeviceRequestFromDcql(
     sessionTranscript: DataItem,
     dcql: JsonObject,
+    transactionData: List<ByteString>? = null,
     otherInfo: Map<String, DataItem> = emptyMap(),
     builderAction: DeviceRequest.Builder.() -> Unit = {}
 ): DeviceRequest {
@@ -942,7 +967,8 @@ inline fun buildDeviceRequestFromDcql(
     val deviceRequestInfo = deviceRequestCalcDeviceRequestInfo(dcqlQuery, otherInfo)
     val builder = DeviceRequest.Builder(
         sessionTranscript = sessionTranscript,
-        deviceRequestInfo = deviceRequestInfo
+        deviceRequestInfo = deviceRequestInfo,
+        transactionData = transactionData
     )
     deviceRequestAddQueries(dcqlQuery, builder)
     builder.builderAction()
@@ -966,12 +992,14 @@ inline fun buildDeviceRequestFromDcql(
 inline fun buildDeviceRequestFromDcql(
     sessionTranscript: DataItem,
     dcqlString: String,
+    transactionData: List<ByteString>? = null,
     otherInfo: Map<String, DataItem> = emptyMap(),
     builderAction: DeviceRequest.Builder.() -> Unit = {}
 ): DeviceRequest {
     return buildDeviceRequestFromDcql(
         sessionTranscript = sessionTranscript,
         dcql = Json.decodeFromString<JsonObject>(dcqlString),
+        transactionData = transactionData,
         otherInfo = otherInfo,
         builderAction = builderAction
     )

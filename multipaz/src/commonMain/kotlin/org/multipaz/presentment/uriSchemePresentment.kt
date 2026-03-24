@@ -159,7 +159,7 @@ suspend fun uriSchemePresentment(
     check(postResponseResponse.contentType()!! == ContentType.Application.Json)
     val bodyText = (postResponseResponse.body() as ByteArray).decodeToString()
     val postResponseBody = Json.decodeFromString<JsonObject>(bodyText)
-    val redirectUri = postResponseBody["redirect_uri"]!!.jsonPrimitive.content
+    val redirectUri = postResponseBody["redirect_uri"]?.jsonPrimitive?.content
 
     source.eventLogger?.addEventAsync(
         EventPresentmentUriSchemeOpenID4VP(

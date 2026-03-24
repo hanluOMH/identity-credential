@@ -3,6 +3,7 @@ package org.multipaz.mdoc.response
 import kotlinx.io.bytestring.ByteString
 import org.multipaz.cbor.Bstr
 import org.multipaz.cbor.Cbor
+import org.multipaz.cbor.CborArray
 import org.multipaz.cbor.DataItem
 import org.multipaz.cbor.Tagged
 import org.multipaz.cbor.buildCborArray
@@ -28,6 +29,7 @@ import org.multipaz.mdoc.issuersigned.IssuerNamespaces
 import org.multipaz.mdoc.issuersigned.IssuerSignedItem
 import org.multipaz.mdoc.issuersigned.buildIssuerNamespaces
 import org.multipaz.mdoc.mso.MobileSecurityObject
+import org.multipaz.presentment.TransactionData
 import org.multipaz.presentment.PresentmentUnlockReason
 import org.multipaz.request.MdocRequestedClaim
 import kotlin.time.Clock
@@ -49,6 +51,7 @@ data class MdocDocument(
     val issuerNamespaces: IssuerNamespaces,
     val deviceAuth: DeviceAuth,
     val deviceNamespaces: DeviceNamespaces,
+    val transactionDataHashes: List<ByteString>,
     val errors: Map<String, Map<String, Int>>,
     private val issuerNamespaceDigests: Map<String, Map<String, ByteString>>? = null
 ) {
@@ -62,6 +65,7 @@ data class MdocDocument(
         if (issuerNamespaces != other.issuerNamespaces) return false
         if (deviceAuth != other.deviceAuth) return false
         if (deviceNamespaces != other.deviceNamespaces) return false
+        if (transactionDataHashes != other.transactionDataHashes) return false
         if (errors != other.errors) return false
         return true
     }
@@ -109,6 +113,11 @@ data class MdocDocument(
                 tagNumber = Tagged.ENCODED_CBOR,
                 taggedItem = Bstr(Cbor.encode(deviceNamespaces.toDataItem()))
             ))
+            if (transactionDataHashes.isNotEmpty()) {
+                put("transactionDataHashes", CborArray(transactionDataHashes.map { hash ->
+                    hash.toByteArray().toDataItem()
+                }.toMutableList()))
+            }
         }
         if (errors.isNotEmpty()) {
             putCborMap("errors") {
@@ -283,6 +292,11 @@ data class MdocDocument(
             } else {
                 DeviceAuth.Mac(deviceAuthDataItem["deviceMac"].asCoseMac0)
             }
+            val transactionDataHashes = if (deviceSigned.hasKey("transactionDataHashes")) {
+                deviceSigned["transactionDataHashes"].asArray.map { ByteString(it.asBstr) }
+            } else {
+                listOf()
+            }
             val deviceNamespaces = DeviceNamespaces.fromDataItem(deviceSigned["nameSpaces"].asTaggedEncodedCbor)
             val errors = dataItem.getOrNull("errors")?.asMap?.entries?.associate { (namespace, errorItems) ->
                 namespace.asTstr to errorItems.asMap.entries.associate { (dataElementName, errorCode) ->
@@ -295,8 +309,9 @@ data class MdocDocument(
                 issuerNamespaces = issuerNamespaces,
                 deviceAuth = deviceAuth,
                 deviceNamespaces = deviceNamespaces,
+                transactionDataHashes = transactionDataHashes,
                 errors = errors ?: emptyMap(),
-                issuerNamespaceDigests = issuerNamespaceDigests
+                issuerNamespaceDigests = issuerNamespaceDigests,
             )
         }
 
@@ -321,6 +336,7 @@ data class MdocDocument(
             issuerNamespaces: IssuerNamespaces,
             deviceNamespaces: DeviceNamespaces,
             deviceKey: AsymmetricKey,
+            transactionDataHashes: List<ByteString> = emptyList(),
             errors: Map<String, Map<String, Int>> = emptyMap()
         ): MdocDocument {
             val deviceAuthentication = buildCborArray {
@@ -378,6 +394,7 @@ data class MdocDocument(
                 issuerNamespaces = issuerNamespaces,
                 deviceAuth = deviceAuth,
                 deviceNamespaces = deviceNamespaces,
+                transactionDataHashes = transactionDataHashes,
                 errors = errors,
                 issuerNamespaceDigests = null
             )
@@ -399,6 +416,7 @@ data class MdocDocument(
             eReaderKey: EcPublicKey? = null,
             credential: MdocCredential,
             requestedClaims: List<MdocRequestedClaim>,
+            transactionDataHashes: List<ByteString>,
             deviceNamespaces: DeviceNamespaces = buildDeviceNamespaces {},
             errors: Map<String, Map<String, Int>> = emptyMap(),
         ): MdocDocument {
@@ -417,6 +435,7 @@ data class MdocDocument(
                     keyInfo = credential.secureArea.getKeyInfo(credential.alias),
                     unlockReason = PresentmentUnlockReason(credential),
                 ),
+                transactionDataHashes = transactionDataHashes,
                 errors = errors
             )
         }

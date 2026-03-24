@@ -301,6 +301,7 @@ data class DeviceResponse internal constructor(
                 credential = credential,
                 requestedClaims = requestedClaims,
                 deviceNamespaces = deviceNamespaces,
+                transactionDataHashes = emptyList(),
                 errors = errors
             ))
         }

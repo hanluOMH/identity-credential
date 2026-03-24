@@ -1,4 +1,4 @@
-package org.multipaz.openid
+package org.multipaz.presentment
 
 import kotlinx.io.bytestring.ByteString
 import kotlinx.serialization.json.Json
@@ -16,38 +16,35 @@ import org.multipaz.util.fromBase64Url
 /**
  * An object that describes transaction data item in the context of OpenID4VP.
  *
- * TODO: perhaps we need to make this a base sealed class and have one variant for JSON-based
- *  workflows and another for CBOR ones?
- *
  * @param hash hash of encoded transaction data item, calculated using [hashAlgorithm] or SHA256
  *  if not explicitly specified
  * @param hashAlgorithm algorithm, only if it was explicitly specified in transaction data
  * @param type type of the transaction data item
  * @param data JSON object that represents the transaction data item
  */
-class TransactionData(
-    val hash: ByteString,
-    val hashAlgorithm: Algorithm?,
-    val type: String,
+class TransactionDataJson(
+    hash: ByteString,
+    hashAlgorithm: Algorithm?,
+    type: String,
     val data: JsonObject
-) {
+): TransactionData(hash, hashAlgorithm, type) {
     companion object {
         /**
-         * Parses encoded transaction data.
+         * Parses OpenID4VP JSON-encoded transaction data.
          *
-         * @param transactionData encoded transaction data (array of base64url-encoded items)
+         * @param transactionData encoded transaction data (array of base64url-encoded JSON items)
          * @return map of credential id to the list of applicable transaction data items
          */
         suspend fun parse(
             transactionData: JsonElement
-        ): Map<String, List<TransactionData>> {
+        ): Map<String, List<TransactionDataJson>> {
             transactionData as? JsonArray
                 ?: throw IllegalArgumentException("Invalid transaction_data")
             return parse(transactionData.map { it.jsonPrimitive.content })
         }
 
         /**
-         * Parses encoded transaction data.
+         * Parses OpenID4VP JSON-encoded transaction data.
          *
          * @param transactionData encoded transaction data (array of base64url-encoded items)
          * @param hashAlgorithmOverrides map of credential id to the hash algorithm that must be
@@ -57,19 +54,16 @@ class TransactionData(
         suspend fun parse(
             transactionData: List<String>,
             hashAlgorithmOverrides: Map<String, Algorithm?>? = null
-        ): Map<String, List<TransactionData>> {
-            val map = mutableMapOf<String, MutableList<TransactionData>>()
+        ): Map<String, List<TransactionDataJson>> {
+            val map = mutableMapOf<String, MutableList<TransactionDataJson>>()
             for (encoded in transactionData) {
                 val jsonText = encoded.fromBase64Url().decodeToString()
                 val data = Json.parseToJsonElement(jsonText).jsonObject
                 val credentialIds = data["credential_ids"]!!.jsonArray
                 val type = data["type"]!!.jsonPrimitive.content
-                if (type != "org.multipaz.transaction_data.test") {
-                    throw IllegalArgumentException("Unsupported transaction type: '$type'")
-                }
                 val hashAlgorithm = if (hashAlgorithmOverrides != null) {
                     // hashAlgorithmOverrides is not null when parsing for verification. At that
-                    // point the presenter picked and algorithm, we must use that same algorithm.
+                    // point the presenter picked an algorithm, we must use that same algorithm.
                     hashAlgorithmOverrides[credentialIds.first().jsonPrimitive.content]
                 } else {
                     data["transaction_data_hashes_alg"]?.let { algs ->
@@ -85,7 +79,7 @@ class TransactionData(
                     }
                 }
                 val hash = Crypto.digest(hashAlgorithm ?: Algorithm.SHA256, encoded.encodeToByteArray())
-                val parsed = TransactionData(ByteString(hash), hashAlgorithm, type, data)
+                val parsed = TransactionDataJson(ByteString(hash), hashAlgorithm, type, data)
                 for (id in credentialIds) {
                     map.getOrPut(id.jsonPrimitive.content) { mutableListOf() }.add(parsed)
                 }
