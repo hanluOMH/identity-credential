@@ -25,6 +25,8 @@ import org.multipaz.trustmanagement.TrustMetadata
  *
  * @property documentStore the [DocumentStore] which holds credentials that can be presented.
  * @property documentTypeRepository a [DocumentTypeRepository] which holds metadata for document types.
+ * @property transactionDataRepository a [TransactionDataRepository] containing transaction data for
+ *   the presentment flow.
  * @property zkSystemRepository a [ZkSystemRepository] with ZKP systems or `null`.
  * @property eventLogger an [EventLogger] for logging events or `null`.
  * @see SimplePresentmentSource for one concrete implementation tailored for ISO mdoc and IETF SD-JWT VC credentials.
@@ -32,6 +34,7 @@ import org.multipaz.trustmanagement.TrustMetadata
 abstract class PresentmentSource(
     open val documentStore: DocumentStore,
     open val documentTypeRepository: DocumentTypeRepository,
+    open val transactionDataRepository: TransactionDataRepository = TransactionDataRepository(),
     open val zkSystemRepository: ZkSystemRepository? = null,
     open val eventLogger: EventLogger? = null
 ) {
