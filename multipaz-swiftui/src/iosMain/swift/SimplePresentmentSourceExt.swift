@@ -10,6 +10,7 @@ extension SimplePresentmentSource.Companion {
     ///   - documetStore: the [DocumentStore] which holds credentials that can be presented.
     ///   - documentTypeRepository: a [DocumentTypeRepository] which holds metadata for document types.
     ///   - transactionDataRepository: a [TransactionDataRepository] containing transaction data for presentment.
+    ///   - transactionDataTypeRepository: a [TransactionDataTypeRepository] containing transaction-data type metadata and consent behavior.
     ///   - zkSystemRepository: the [ZkSystemRepository] to use or `nil`.
     ///   - eventLogger: an [EventLogger] for logging events or `nil`.
     ///   - resolveTrustFn: a function which can be used to determine if a requester is trusted.
@@ -23,6 +24,7 @@ extension SimplePresentmentSource.Companion {
         documentStore: DocumentStore,
         documentTypeRepository: DocumentTypeRepository,
         transactionDataRepository: TransactionDataRepository = TransactionDataRepository(),
+        transactionDataTypeRepository: TransactionDataTypeRepository = TransactionDataTypeRepository(),
         zkSystemRepository: ZkSystemRepository? = nil,
         eventLogger: EventLogger? = nil,
         resolveTrustFn: @escaping @Sendable (
@@ -45,6 +47,7 @@ extension SimplePresentmentSource.Companion {
             documentStore: documentStore,
             documentTypeRepository: documentTypeRepository,
             transactionDataRepository: transactionDataRepository,
+            transactionDataTypeRepository: transactionDataTypeRepository,
             zkSystemRepository: zkSystemRepository,
             eventLogger: eventLogger,
             resolveTrustFn: ResolveTrustHandler(f: resolveTrustFn),
