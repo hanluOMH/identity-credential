@@ -1,13 +1,10 @@
 package org.multipaz.documenttype.knowntypes
 
-import kotlinx.datetime.parse
+import kotlinx.serialization.json.JsonPrimitive
 import org.multipaz.documenttype.DocumentAttributeType
 import org.multipaz.documenttype.DocumentType
 import org.multipaz.documenttype.Icon
-import kotlinx.serialization.json.JsonPrimitive
-import org.multipaz.cbor.toDataItemDateTimeString
 import org.multipaz.documenttype.StringOption
-import kotlin.time.Instant
 
 /**
  * Object containing the metadata of the Utopia Movie Ticket Document Type.
@@ -27,7 +24,7 @@ object UtopiaMovieTicket {
                 "Ticket number",
                 "Ticket identification/reference number issued at the purchase time.",
                 Icon.NUMBERS,
-                JsonPrimitive(SampleData.TICKET_NUMBER)
+                JsonPrimitive(UtopiaSampleData.TICKET_NUMBER)
             )
             .addJsonAttribute(
                 DocumentAttributeType.String,
@@ -35,7 +32,7 @@ object UtopiaMovieTicket {
                 "Cinema theater",
                 "Cinema theater name, and/or address/location of the admission.",
                 Icon.PLACE,
-                JsonPrimitive(SampleData.CINEMA)
+                JsonPrimitive(UtopiaSampleData.CINEMA)
             )
             .addJsonAttribute(
                 DocumentAttributeType.String,
@@ -43,7 +40,7 @@ object UtopiaMovieTicket {
                 "Movie title",
                 "Movie name, title, and any other show identification information.",
                 Icon.TODAY,
-                JsonPrimitive(SampleData.MOVIE)
+                JsonPrimitive(UtopiaSampleData.MOVIE)
             )
             .addJsonAttribute(
                 type = DocumentAttributeType.DateTime,
@@ -51,7 +48,7 @@ object UtopiaMovieTicket {
                 displayName = "Date and time of the show",
                 description = "Date and time when the movie starts",
                 icon = Icon.TODAY,
-                sampleValue = JsonPrimitive(SampleData.MOVIE_DATE_TIME)
+                sampleValue = JsonPrimitive(UtopiaSampleData.MOVIE_DATE_TIME)
             )
             .addJsonAttribute(
                 DocumentAttributeType.StringOptions(
@@ -68,7 +65,7 @@ object UtopiaMovieTicket {
                 "Age rating code",
                 "Movie rating code for age restrictions.",
                 Icon.TODAY,
-                JsonPrimitive(SampleData.MOVIE_RATING)
+                JsonPrimitive(UtopiaSampleData.MOVIE_RATING)
             )
             .addJsonAttribute(
                 DocumentAttributeType.String,
@@ -76,7 +73,7 @@ object UtopiaMovieTicket {
                 "Theater",
                 "Name or number of the theater in a multi-theater cinema building.",
                 Icon.TODAY,
-                JsonPrimitive(SampleData.THEATRE_NAME)
+                JsonPrimitive(UtopiaSampleData.THEATRE_NAME)
             )
             .addJsonAttribute(
                 DocumentAttributeType.String,
@@ -84,7 +81,7 @@ object UtopiaMovieTicket {
                 "Seat",
                 "Seat number or code (e.g. row/seat).",
                 Icon.NUMBERS,
-                JsonPrimitive(SampleData.THEATRE_SEAT)
+                JsonPrimitive(UtopiaSampleData.THEATRE_SEAT)
             )
             .addJsonAttribute(
                 DocumentAttributeType.Boolean,
@@ -92,7 +89,7 @@ object UtopiaMovieTicket {
                 "Parking",
                 "Flag if car parking is prepaid with the ticket purchase.",
                 Icon.DIRECTIONS_CAR,
-                JsonPrimitive(SampleData.CINEMA_PARKING)
+                JsonPrimitive(UtopiaSampleData.CINEMA_PARKING)
             )
             .addJsonAttribute(
                 DocumentAttributeType.Picture,
@@ -121,3 +118,4 @@ object UtopiaMovieTicket {
             .build()
     }
 }
+
