@@ -9,6 +9,7 @@ extension SimplePresentmentSource.Companion {
     ///- Parameters:
     ///   - documetStore: the [DocumentStore] which holds credentials that can be presented.
     ///   - documentTypeRepository: a [DocumentTypeRepository] which holds metadata for document types.
+    ///   - transactionDataRepository: a [TransactionDataRepository] containing transaction data for presentment.
     ///   - zkSystemRepository: the [ZkSystemRepository] to use or `nil`.
     ///   - eventLogger: an [EventLogger] for logging events or `nil`.
     ///   - resolveTrustFn: a function which can be used to determine if a requester is trusted.
@@ -21,6 +22,7 @@ extension SimplePresentmentSource.Companion {
     public func create(
         documentStore: DocumentStore,
         documentTypeRepository: DocumentTypeRepository,
+        transactionDataRepository: TransactionDataRepository = TransactionDataRepository(),
         zkSystemRepository: ZkSystemRepository? = nil,
         eventLogger: EventLogger? = nil,
         resolveTrustFn: @escaping @Sendable (
@@ -42,6 +44,7 @@ extension SimplePresentmentSource.Companion {
         return SimplePresentmentSource(
             documentStore: documentStore,
             documentTypeRepository: documentTypeRepository,
+            transactionDataRepository: transactionDataRepository,
             zkSystemRepository: zkSystemRepository,
             eventLogger: eventLogger,
             resolveTrustFn: ResolveTrustHandler(f: resolveTrustFn),
