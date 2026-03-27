@@ -61,9 +61,15 @@ func getPresentmentSource() async -> PresentmentSource {
     }
     zkSystemRepository.add(zkSystem: longfellow)
      */
+    let transactionDataTypeRepository = TransactionDataTypeRepository()
+    UtopiaTransactionDataTypes.shared.registerDefaultTypes(
+        transactionDataTypeRepository: transactionDataTypeRepository
+    )
+
     return SimplePresentmentSource.companion.create(
         documentStore: documentStore,
         documentTypeRepository: documentTypeRepository,
+        transactionDataTypeRepository: transactionDataTypeRepository,
         zkSystemRepository: zkSystemRepository,
         resolveTrustFn: { requester in
             if let certChain = requester.certChain {

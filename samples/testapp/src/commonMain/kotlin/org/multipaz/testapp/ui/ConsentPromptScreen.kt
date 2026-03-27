@@ -57,6 +57,7 @@ import org.multipaz.presentment.CredentialPresentmentData
 import org.multipaz.presentment.CredentialPresentmentSelection
 import org.multipaz.presentment.PresentmentSource
 import org.multipaz.presentment.SimplePresentmentSource
+import org.multipaz.presentment.TransactionDataTypeRepository
 import org.multipaz.prompt.PromptModel
 import org.multipaz.prompt.requestConsent
 import org.multipaz.request.Requester
@@ -69,6 +70,7 @@ import org.multipaz.securearea.software.SoftwareCreateKeySettings
 import org.multipaz.securearea.software.SoftwareSecureArea
 import org.multipaz.storage.ephemeral.EphemeralStorage
 import org.multipaz.trustmanagement.TrustMetadata
+import org.multipaz.transactiondata.knowntypes.UtopiaTransactionDataTypes
 import org.multipaz.util.truncateToWholeSeconds
 import kotlin.time.Clock
 import kotlin.time.Duration
@@ -744,9 +746,12 @@ private suspend fun getQueryResult(
         utopiaBreweryIcon = utopiaBreweryIcon,
         identityReaderIcon = identityReaderIcon
     )
+    val transactionDataTypeRepository = TransactionDataTypeRepository()
+    UtopiaTransactionDataTypes.registerDefaultTypes(transactionDataTypeRepository)
     val source = SimplePresentmentSource(
         documentStore = documentStore!!,
         documentTypeRepository = documentTypeRepository,
+        transactionDataTypeRepository = transactionDataTypeRepository,
         resolveTrustFn = { requester ->
             // If available, use dynamic metadata...
             val readerCert = requester.certChain?.certificates?.first()

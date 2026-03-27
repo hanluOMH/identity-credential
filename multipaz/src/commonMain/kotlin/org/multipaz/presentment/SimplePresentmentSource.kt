@@ -69,6 +69,11 @@ class SimplePresentmentSource(
     zkSystemRepository = zkSystemRepository,
     eventLogger = eventLogger
 ) {
+    init {
+        // Consent UIs resolve transaction-data rendering via the shared registry.
+        TransactionDataTypeRegistry.setRepository(transactionDataTypeRepository)
+    }
+
     override suspend fun resolveTrust(requester: Requester): TrustMetadata? {
         return resolveTrustFn(requester)
     }

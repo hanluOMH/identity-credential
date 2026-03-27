@@ -205,6 +205,31 @@ struct InfoSection: View {
     }
 }
 
+struct TransactionDataSection: View {
+    let transactionData: [TransactionData]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Includes transaction data:")
+                .font(.system(size: 14, weight: .bold))
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+
+            ForEach(0..<transactionData.count, id: \.self) { index in
+                let data = transactionData[index]
+                let model = TransactionDataTypeRegistry.shared.getConsentModel(transactionData: data)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(model.title)
+                        .font(.system(size: 14, weight: .bold))
+                    Text(model.summary)
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+}
+
 struct CombinationSection: View {
     let rpName: String
     let requester: Requester
@@ -257,6 +282,11 @@ struct CombinationSection: View {
                     showOptionsButton: element.matches.count > 1,
                     onOptionsTapped: { onShowOptions(idx) }
                 )
+
+                if !match.transactionData.isEmpty {
+                    Divider()
+                    TransactionDataSection(transactionData: Array(match.transactionData))
+                }
             }
 
             // Note: on iOS we do not support apps requesting data so no need to handle the case
