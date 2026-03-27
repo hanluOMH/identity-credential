@@ -48,6 +48,7 @@ import org.multipaz.document.Document
 import org.multipaz.document.DocumentStore
 import org.multipaz.document.buildDocumentStore
 import org.multipaz.documenttype.DocumentTypeRepository
+import org.multipaz.documenttype.knowntypes.DigitalPaymentCredential
 import org.multipaz.documenttype.knowntypes.DrivingLicense
 import org.multipaz.documenttype.knowntypes.PhotoID
 import org.multipaz.documenttype.knowntypes.UtopiaBoardingPass
@@ -70,6 +71,8 @@ import org.multipaz.securearea.software.SoftwareCreateKeySettings
 import org.multipaz.securearea.software.SoftwareSecureArea
 import org.multipaz.storage.ephemeral.EphemeralStorage
 import org.multipaz.trustmanagement.TrustMetadata
+import org.multipaz.presentment.TransactionData
+import org.multipaz.transactiondata.knowntypes.UtopiaPaymentTransactionType
 import org.multipaz.transactiondata.knowntypes.UtopiaTransactionDataTypes
 import org.multipaz.util.truncateToWholeSeconds
 import kotlin.time.Clock
@@ -116,6 +119,7 @@ private enum class UseCase(
     MDL_NAME_AND_ADDRESS_PARTIALLY_STORED("mDL: Name and address (partially stored)"),
     MDL_NAME_AND_ADDRESS_ALL_STORED("mDL: Name and address (all stored)"),
     PHOTO_ID_MANDATORY("PhotoID: Mandatory data elements (2 docs)"),
+    DIGITAL_PAYMENT_AUTHORIZATION("Digital payment: authorization"),
     OPENID4VP_COMPLEX_EXAMPLE("Complex example from OpenID4VP Appendix D"),
     BOARDING_PASS_AND_MDL_EXAMPLE("Boarding pass AND mDL"),
     BOARDING_PASS_OR_MDL_EXAMPLE("Boarding pass OR mDL")
@@ -176,6 +180,7 @@ fun ConsentPromptScreen(
     var appId by remember { mutableStateOf(AppId.entries.first()) }
     var cardArtMdl by remember { mutableStateOf(ByteArray(0)) }
     var cardArtPhotoId by remember { mutableStateOf(ByteArray(0)) }
+    var cardArtPayment by remember { mutableStateOf(ByteArray(0)) }
     var cardArtBoardingPass by remember { mutableStateOf(ByteArray(0)) }
     var utopiaBreweryIcon by remember { mutableStateOf(ByteString()) }
     var identityReaderIcon by remember { mutableStateOf(ByteString()) }
@@ -192,11 +197,13 @@ fun ConsentPromptScreen(
     lateinit var documentMdl: Document
     lateinit var documentPhotoId: Document
     lateinit var documentPhotoId2: Document
+    lateinit var documentPayment: Document
     lateinit var documentBoardingPass: Document
 
     LaunchedEffect(Unit) {
         cardArtMdl = Res.readBytes("files/utopia_driving_license_card_art.png")
         cardArtPhotoId = Res.readBytes("drawable/photo_id_card_art.png")
+        cardArtPayment = Res.readBytes("drawable/payment_card_art.png")
         cardArtBoardingPass = Res.readBytes("files/boarding-pass-utopia-airlines.png")
         utopiaBreweryIcon = ByteString(Res.readBytes("files/utopia-brewery.png"))
         identityReaderIcon = ByteString(Res.readBytes("drawable/app_icon.webp"))
@@ -206,6 +213,7 @@ fun ConsentPromptScreen(
         documentTypeRepository = DocumentTypeRepository()
         documentTypeRepository.addDocumentType(DrivingLicense.getDocumentType())
         documentTypeRepository.addDocumentType(PhotoID.getDocumentType())
+        documentTypeRepository.addDocumentType(DigitalPaymentCredential.getDocumentType())
         documentTypeRepository.addDocumentType(UtopiaBoardingPass.getDocumentType())
         documentStore = buildDocumentStore(storage, secureAreaRepository) {}
         documentModel = DocumentModel.create(documentStore = documentStore!!, documentTypeRepository = documentTypeRepository)
@@ -284,6 +292,22 @@ fun ConsentPromptScreen(
         )
         PhotoID.getDocumentType().createMdocCredentialWithSampleData(
             document = documentPhotoId2,
+            secureArea = secureArea,
+            createKeySettings = CreateKeySettings(),
+            dsKey = dsKey,
+            signedAt = credsValidFrom,
+            validFrom = credsValidFrom,
+            validUntil = credsValidUntil,
+            expectedUpdate = null,
+            domain = "mdoc"
+        )
+        documentPayment = documentStore!!.createDocument(
+            displayName = "Erika's Payment Card Credential",
+            typeDisplayName = "Utopia payment card",
+            cardArt = ByteString(cardArtPayment)
+        )
+        DigitalPaymentCredential.getDocumentType().createMdocCredentialWithSampleData(
+            document = documentPayment,
             secureArea = secureArea,
             createKeySettings = CreateKeySettings(),
             dsKey = dsKey,
@@ -570,6 +594,29 @@ private suspend fun getQueryResult(
             DrivingLicense.getDocumentType().cannedRequests.find { it.id == "name-and-address-all-stored" }!!.mdocRequest!!.toDcql()
         UseCase.PHOTO_ID_MANDATORY ->
             PhotoID.getDocumentType().cannedRequests.find { it.id == "mandatory" }!!.mdocRequest!!.toDcql()
+        UseCase.DIGITAL_PAYMENT_AUTHORIZATION -> Json.parseToJsonElement(
+            """
+            {
+              "credentials": [
+                {
+                  "id": "payment-card",
+                  "format": "mso_mdoc",
+                  "meta": {
+                    "doctype_value": "org.multipaz.payment.sca.1"
+                  },
+                  "claims": [
+                    { "path": ["org.multipaz.payment.sca.1", "issuer_name" ] },
+                    { "path": ["org.multipaz.payment.sca.1", "payment_instrument_id" ] },
+                    { "path": ["org.multipaz.payment.sca.1", "masked_account_reference" ] },
+                    { "path": ["org.multipaz.payment.sca.1", "holder_name" ] },
+                    { "path": ["org.multipaz.payment.sca.1", "issue_date" ] },
+                    { "path": ["org.multipaz.payment.sca.1", "expiry_date" ] }
+                  ]
+                }
+              ]
+            }
+            """.trimIndent()
+        ).jsonObject
         UseCase.OPENID4VP_COMPLEX_EXAMPLE -> Json.parseToJsonElement(
             """
             {
@@ -774,7 +821,26 @@ private suspend fun getQueryResult(
         domainKeyBoundSdJwt = "sdjwt"
     )
     val dcqlQuery = DcqlQuery.fromJson(dcql = dcql)
-    val dcqlResponse = dcqlQuery.execute(presentmentSource = source)
+    val transactionDataMap: Map<String, List<TransactionData>> = when (useCase) {
+        UseCase.DIGITAL_PAYMENT_AUTHORIZATION -> mapOf(
+            "payment-card" to listOf(
+                UtopiaPaymentTransactionType.createTransactionData(
+                    paymentRequest = UtopiaPaymentTransactionType.PaymentRequest(
+                        credentialIds = listOf("payment-card"),
+                        amountMinor = 2599,
+                        currency = "USD",
+                        payee = "Utopia Brewery",
+                        paymentReference = "order-12345"
+                    )
+                )
+            )
+        )
+        else -> emptyMap()
+    }
+    val dcqlResponse = dcqlQuery.execute(
+        presentmentSource = source,
+        transactionDataMap = transactionDataMap
+    )
     return QueryResult(requester, source, dcqlResponse)
 }
 

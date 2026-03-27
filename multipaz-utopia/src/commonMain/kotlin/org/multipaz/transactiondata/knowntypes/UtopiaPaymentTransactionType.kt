@@ -123,26 +123,17 @@ object UtopiaPaymentTransactionType: TransactionDataType {
         val amountMinor = jsonData?.get("amount_minor")?.jsonPrimitive?.contentOrNull
         val currency = jsonData?.get("currency")?.jsonPrimitive?.contentOrNull
         val payee = jsonData?.get("payee")?.jsonPrimitive?.contentOrNull
-        val paymentReference = jsonData?.get("payment_reference")?.jsonPrimitive?.contentOrNull
 
         val summary = if (amountMinor != null && currency != null && payee != null) {
-            "Authorize payment of $amountMinor $currency to $payee"
+            "You are sharing a payment credential with $payee for $amountMinor $currency."
         } else {
-            "Authorize payment transaction"
-        }
-
-        val fields = buildList {
-            payee?.let { add("Payee" to it) }
-            amountMinor?.let { add("Amount (minor units)" to it) }
-            currency?.let { add("Currency" to it) }
-            paymentReference?.let { add("Reference" to it) }
-            add("Type" to transactionData.type)
+            "You are sharing a payment credential."
         }
 
         return TransactionDataConsentModel(
-            title = displayName,
+            title = "Payment credential sharing",
             summary = summary,
-            fields = fields
+            fields = emptyList()
         )
     }
 }
