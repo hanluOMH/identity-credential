@@ -65,6 +65,7 @@ kotlin {
             isStatic = true
             export(project(":multipaz"))
             export(project(":multipaz-doctypes"))
+            export(project(":multipaz-utopia"))
             export(project(":multipaz-longfellow"))
             export(project(":multipaz-dcapi"))
             export(libs.ktor.client.darwin)
@@ -87,6 +88,7 @@ kotlin {
 
                 api(project(":multipaz"))
                 api(project(":multipaz-doctypes"))
+                api(project(":multipaz-utopia"))
                 api(project(":multipaz-longfellow"))
                 api(project(":multipaz-dcapi"))
                 api(libs.ktor.client.darwin)
@@ -152,6 +154,7 @@ kotlin {
                 implementation(project(":multipaz-compose"))
                 implementation(project(":multipaz-dcapi"))
                 implementation(project(":multipaz-doctypes"))
+                implementation(project(":multipaz-utopia"))
                 implementation(project(":multipaz-longfellow"))
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.io.core)

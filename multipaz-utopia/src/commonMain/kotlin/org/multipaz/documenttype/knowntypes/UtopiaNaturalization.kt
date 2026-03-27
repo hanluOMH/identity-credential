@@ -1,9 +1,9 @@
 package org.multipaz.documenttype.knowntypes
 
+import kotlinx.serialization.json.JsonPrimitive
 import org.multipaz.documenttype.DocumentAttributeType
 import org.multipaz.documenttype.DocumentType
 import org.multipaz.documenttype.Icon
-import kotlinx.serialization.json.JsonPrimitive
 
 /**
  * Naturalization Certificate of the fictional State of Utopia.
@@ -23,7 +23,7 @@ object UtopiaNaturalization {
                 "Family name",
                 "Current last name(s), surname(s), or primary identifier of the naturalized person",
                 Icon.PERSON,
-                JsonPrimitive(SampleData.FAMILY_NAME)
+                JsonPrimitive(UtopiaSampleData.FAMILY_NAME)
             )
             .addJsonAttribute(
                 DocumentAttributeType.String,
@@ -31,7 +31,7 @@ object UtopiaNaturalization {
                 "Given names",
                 "Current first name(s), other name(s), or secondary identifier of the naturalized person",
                 Icon.PERSON,
-                JsonPrimitive(SampleData.GIVEN_NAME)
+                JsonPrimitive(UtopiaSampleData.GIVEN_NAME)
             )
             .addJsonAttribute(
                 DocumentAttributeType.Date,
@@ -39,7 +39,7 @@ object UtopiaNaturalization {
                 "Date of birth",
                 "Day, month, and year on which the naturalized person was born. If unknown, approximate date of birth.",
                 Icon.TODAY,
-                JsonPrimitive(SampleData.BIRTH_DATE)
+                JsonPrimitive(UtopiaSampleData.BIRTH_DATE)
             )
             .addJsonAttribute(
                 DocumentAttributeType.Date,
@@ -47,7 +47,7 @@ object UtopiaNaturalization {
                 "Date of naturalization",
                 "Date (and possibly time) when the person was naturalized.",
                 Icon.DATE_RANGE,
-                JsonPrimitive(SampleData.ISSUE_DATE)
+                JsonPrimitive(UtopiaSampleData.ISSUE_DATE)
             )
             .addSampleRequest(
                 id = "full",
@@ -57,3 +57,4 @@ object UtopiaNaturalization {
             .build()
     }
 }
+
