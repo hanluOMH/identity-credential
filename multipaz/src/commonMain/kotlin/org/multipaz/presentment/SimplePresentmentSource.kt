@@ -34,6 +34,8 @@ private data class CredentialForPresentment(
  * @property documentTypeRepository a [DocumentTypeRepository] which holds metadata for document types.
  * @property transactionDataRepository a [TransactionDataRepository] containing transaction data for
  *   the presentment flow.
+ * @property transactionDataTypeRepository a [TransactionDataTypeRepository] containing transaction-data
+ *   type metadata and consent behavior.
  * @property zkSystemRepository the [ZkSystemRepository] to use or `null`.
  * @property eventLogger an [EventLogger] for logging events or `null`.
  * @property resolveTrustFn a function which can be used to determine if a requester is trusted.
@@ -49,6 +51,7 @@ class SimplePresentmentSource(
     override val documentStore: DocumentStore,
     override val documentTypeRepository: DocumentTypeRepository,
     override val transactionDataRepository: TransactionDataRepository = TransactionDataRepository(),
+    override val transactionDataTypeRepository: TransactionDataTypeRepository = TransactionDataTypeRepository(),
     override val zkSystemRepository: ZkSystemRepository? = null,
     override val eventLogger: EventLogger? = null,
     private val resolveTrustFn: suspend (requester: Requester) -> TrustMetadata? = { requester -> null },
@@ -62,6 +65,7 @@ class SimplePresentmentSource(
     documentStore = documentStore,
     documentTypeRepository = documentTypeRepository,
     transactionDataRepository = transactionDataRepository,
+    transactionDataTypeRepository = transactionDataTypeRepository,
     zkSystemRepository = zkSystemRepository,
     eventLogger = eventLogger
 ) {
