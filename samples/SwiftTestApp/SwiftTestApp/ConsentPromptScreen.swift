@@ -566,9 +566,15 @@ private func calcConsentData(
         Requester(certChain: readerCertChainToUse, appId: nil, origin: "https://other.example.com")
     }
 
+    let transactionDataTypeRepository = TransactionDataTypeRepository()
+    UtopiaTransactionDataTypes.shared.registerDefaultTypes(
+        transactionDataTypeRepository: transactionDataTypeRepository
+    )
+
     let source = SimplePresentmentSource.companion.create(
         documentStore: documentStore,
         documentTypeRepository: documentTypeRepository,
+        transactionDataTypeRepository: transactionDataTypeRepository,
         resolveTrustFn: { requester in
             return nil
         },

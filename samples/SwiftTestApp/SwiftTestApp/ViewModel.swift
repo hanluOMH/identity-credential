@@ -291,9 +291,15 @@ class ViewModel {
     }
     
     func getSource() -> PresentmentSource {
+        let transactionDataTypeRepository = TransactionDataTypeRepository()
+        UtopiaTransactionDataTypes.shared.registerDefaultTypes(
+            transactionDataTypeRepository: transactionDataTypeRepository
+        )
+
         return SimplePresentmentSource.companion.create(
             documentStore: documentStore,
             documentTypeRepository: documentTypeRepository,
+            transactionDataTypeRepository: transactionDataTypeRepository,
             zkSystemRepository: nil,
             resolveTrustFn: { requester in
                 if let certChain = requester.certChain {
@@ -321,4 +327,3 @@ class ViewModel {
         )
     }
 }
-

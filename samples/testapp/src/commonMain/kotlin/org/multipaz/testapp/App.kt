@@ -101,6 +101,7 @@ import org.multipaz.mpzpass.MpzPass
 import org.multipaz.nfc.ExternalNfcReaderStore
 import org.multipaz.presentment.PresentmentSource
 import org.multipaz.presentment.SimplePresentmentSource
+import org.multipaz.presentment.TransactionDataTypeRepository
 import org.multipaz.presentment.uriSchemePresentment
 import org.multipaz.prompt.PromptModel
 import org.multipaz.prompt.promptModelRequestConsent
@@ -159,6 +160,7 @@ import org.multipaz.transactiontype.knowntypes.PingTransaction
 import org.multipaz.trustmanagement.CompositeTrustManager
 import org.multipaz.trustmanagement.TrustManager
 import org.multipaz.trustmanagement.TrustMetadata
+import org.multipaz.transactiondata.knowntypes.UtopiaTransactionDataTypes
 import org.multipaz.util.Logger
 import org.multipaz.util.Platform
 import org.multipaz.util.fromBase64Url
@@ -234,9 +236,12 @@ class App private constructor (val promptModel: PromptModel) {
 
     fun getPresentmentSource(): PresentmentSource {
         val useAuth = settingsModel.presentmentRequireAuthentication.value
+        val transactionDataTypeRepository = TransactionDataTypeRepository()
+        UtopiaTransactionDataTypes.registerDefaultTypes(transactionDataTypeRepository)
         return SimplePresentmentSource(
             documentStore = documentStore,
             documentTypeRepository = documentTypeRepository,
+            transactionDataTypeRepository = transactionDataTypeRepository,
             zkSystemRepository = zkSystemRepository,
             eventLogger = eventLogger,
             showConsentPromptFn = if (settingsModel.presentmentShowConsentPrompt.value) {

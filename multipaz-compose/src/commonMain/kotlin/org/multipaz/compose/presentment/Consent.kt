@@ -119,6 +119,7 @@ import org.multipaz.multipaz_compose.generated.resources.credential_presentment_
 import org.multipaz.presentment.CredentialPresentmentSetOptionMemberMatch
 import org.multipaz.presentment.CredentialPresentmentData
 import org.multipaz.presentment.CredentialPresentmentSelection
+import org.multipaz.presentment.TransactionDataTypeRegistry
 import org.multipaz.request.MdocRequestedClaim
 import org.multipaz.request.Requester
 import org.multipaz.trustmanagement.TrustMetadata
@@ -820,11 +821,6 @@ private fun CredentialSetViewer(
 
         val transactionData = combinationElement.matches[matchNum].transactionData
         if (transactionData.isNotEmpty()) {
-            // Fallback transaction data display. This is acceptable for testing, but it is
-            // unexpected in real-life wallet applications. Generally an wallet should reject
-            // transaction types that it does not understand (so they will not even show up
-            // as a viable choice) and it should provide custom consent prompt for transactions
-            // that it does understand.
             entries.add {
                 Column(
                     modifier = Modifier
@@ -840,13 +836,26 @@ private fun CredentialSetViewer(
                         fontWeight = FontWeight.Bold
                     )
                     for (data in transactionData) {
+                        val consentModel = TransactionDataTypeRegistry.getConsentModel(data)
                         Text(
-                            modifier = Modifier.fillMaxWidth().padding(12.dp, 0.dp, 0.dp, 0.dp),
-                            text = "\u2022 ${data.type.displayName}",
+                            modifier = Modifier.fillMaxWidth(),
+                            text = consentModel.title,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onError,
                             fontWeight = FontWeight.Bold
                         )
+                        Text(
+                            modifier = Modifier.fillMaxWidth(),
+                            text = consentModel.summary,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        for ((name, value) in consentModel.fields) {
+                            Text(
+                                modifier = Modifier.fillMaxWidth(),
+                                text = "$name: $value",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
                     }
                 }
             }
