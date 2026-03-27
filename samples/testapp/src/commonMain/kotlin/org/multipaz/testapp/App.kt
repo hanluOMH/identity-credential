@@ -155,6 +155,7 @@ import org.multipaz.testapp.ui.TrustEntryScreen
 import org.multipaz.testapp.ui.TrustEntryVicalEntryScreen
 import org.multipaz.testapp.ui.TrustManagerScreen
 import org.multipaz.testapp.ui.VerticalDocumentListScreen
+import org.multipaz.transactiontype.knowntypes.PingTransaction
 import org.multipaz.trustmanagement.CompositeTrustManager
 import org.multipaz.trustmanagement.TrustManager
 import org.multipaz.trustmanagement.TrustMetadata
@@ -357,6 +358,7 @@ class App private constructor (val promptModel: PromptModel) {
         documentTypeRepository.addDocumentType(AgeVerification.getDocumentType())
         documentTypeRepository.addDocumentType(Loyalty.getDocumentType())
         documentTypeRepository.addDocumentType(DigitalPaymentCredential.getDocumentType())
+        documentTypeRepository.addTransactionType(PingTransaction)
     }
 
     private suspend fun documentStoreInit() {
