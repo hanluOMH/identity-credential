@@ -64,6 +64,7 @@ import org.multipaz.rpc.handler.SimpleCipher
 import org.multipaz.sdjwt.SdJwt
 import org.multipaz.sdjwt.SdJwtKb
 import org.multipaz.server.common.getBaseUrl
+import org.multipaz.server.common.getDomain
 import org.multipaz.server.enrollment.ServerIdentity
 import org.multipaz.server.enrollment.getServerIdentity
 import org.multipaz.storage.ephemeral.EphemeralStorage
@@ -287,6 +288,7 @@ private suspend fun generateRequest(
 ): JsonObject {
     val sessionIdentity = getServerIdentity(ServerIdentity.VERIFIER)
     val baseUrl = BackendEnvironment.getBaseUrl()
+    val origin = BackendEnvironment.getDomain()
     val query = Json.parseToJsonElement(session.dcqlQuery).jsonObject
     return if (responseMode == OpenID4VP.ResponseMode.DC_API) {
         val docRequestOtherInfo = if (session.jsonTransactionData.isNullOrEmpty()) {
@@ -305,7 +307,7 @@ private suspend fun generateRequest(
             jsonTransactionData = session.jsonTransactionData ?: listOf(),
             docRequestOtherInfo = docRequestOtherInfo,
             nonce = session.nonce,
-            origin = baseUrl,
+            origin = origin,
             clientId = getClientId(),
             responseEncryptionKey = session.encryptionPrivateKey.publicKey,
             readerAuthenticationKey = sessionIdentity,
@@ -420,6 +422,7 @@ private suspend fun processOpenID4VPResponseText(
         )
     ).jsonObject
     val baseUrl = BackendEnvironment.getBaseUrl()
+    val origin = BackendEnvironment.getDomain()
     val token = decryptedResponse["vp_token"]!!.jsonObject
     val jwkThumbPrint = session.encryptionPrivateKey.publicKey
         .toJwkThumbprint(Algorithm.SHA256).toByteArray()
@@ -427,7 +430,7 @@ private suspend fun processOpenID4VPResponseText(
     val handoverInfo = Cbor.encode(
         buildCborArray {
             if (dcApi) {
-                add(baseUrl)
+                add(origin)
                 add(nonce)
                 add(jwkThumbPrint)
             } else {
@@ -519,10 +522,10 @@ private suspend fun processIsoMdocResponse(
     }
     val base64EncryptionInfo = Cbor.encode(encryptionInfo).toBase64Url()
 
-    val baseUrl = BackendEnvironment.getBaseUrl()
+    val origin = BackendEnvironment.getDomain()
     val dcapiInfo = buildCborArray {
         add(base64EncryptionInfo)
-        add(baseUrl)  // origin
+        add(origin)
     }
 
     val dcapiInfoDigest = Crypto.digest(Algorithm.SHA256, Cbor.encode(dcapiInfo))
@@ -789,4 +792,3 @@ private suspend fun decodeSessionId(code: String): String {
 }
 
 private const val TAG = "verifyCredentials"
-
