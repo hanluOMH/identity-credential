@@ -214,6 +214,7 @@ fun ConsentPromptScreen(
         documentTypeRepository.addDocumentType(DrivingLicense.getDocumentType())
         documentTypeRepository.addDocumentType(PhotoID.getDocumentType())
         documentTypeRepository.addDocumentType(DigitalPaymentCredential.getDocumentType())
+        UtopiaTransactionDataTypes.registerPaymentAuthorizationTransactionType(documentTypeRepository)
         documentTypeRepository.addDocumentType(UtopiaBoardingPass.getDocumentType())
         documentStore = buildDocumentStore(storage, secureAreaRepository) {}
         documentModel = DocumentModel.create(documentStore = documentStore!!, documentTypeRepository = documentTypeRepository)

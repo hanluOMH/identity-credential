@@ -167,7 +167,9 @@ data class DcqlQuery(
                     }
                     val transactionData = transactionDataMap[credentialQuery.id] ?: emptyList()
                     for (transaction in transactionData) {
-                        if (!transaction.type.isApplicable(transaction, cred)) {
+                        val transactionType = presentmentSource.documentTypeRepository
+                            .getTransactionTypeByIdentifier(transaction.type)
+                        if (transactionType == null || !transactionType.isApplicable(transaction, cred)) {
                             didNotMatch = true
                             break
                         }
@@ -212,7 +214,9 @@ data class DcqlQuery(
                         }
                         val transactionData = transactionDataMap[credentialQuery.id] ?: emptyList()
                         for (transaction in transactionData) {
-                            if (!transaction.type.isApplicable(transaction, cred)) {
+                            val transactionType = presentmentSource.documentTypeRepository
+                                .getTransactionTypeByIdentifier(transaction.type)
+                            if (transactionType == null || !transactionType.isApplicable(transaction, cred)) {
                                 didNotMatch = true
                                 break
                             }

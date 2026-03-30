@@ -8,7 +8,6 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
-import org.multipaz.crypto.Algorithm
 import org.multipaz.crypto.Crypto
 import org.multipaz.crypto.EcPublicKey
 import org.multipaz.crypto.JsonWebSignature
@@ -104,19 +103,12 @@ class SdJwtKb private constructor(
             if (hashes.size != transactionData.size) {
                 throw IllegalStateException("Unexpected 'transaction_data_hashes' size")
             }
-            val hashAlgorithm = try {
-                jwtBody["transaction_data_hashes_alg"]?.jsonPrimitive?.content?.let {
-                    Algorithm.fromHashAlgorithmIdentifier(it)
-                } ?: Algorithm.SHA256
-            } catch (err: Exception) {
-                throw IllegalStateException("Unknown or invalid transaction data hash algorithm", err)
-            }
             transactionData.zip(hashes).forEach { (transaction, hash) ->
                 if (hash !is JsonPrimitive || !hash.isString) {
                     throw IllegalStateException("Invalid transaction data hash value")
                 }
                 val responseHash = ByteString(hash.content.fromBase64Url())
-                if (transaction.getHash(hashAlgorithm) != responseHash) {
+                if (transaction.hash != responseHash) {
                     throw IllegalStateException("Transaction data hash mismatch")
                 }
             }

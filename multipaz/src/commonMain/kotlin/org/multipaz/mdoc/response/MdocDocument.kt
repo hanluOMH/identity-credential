@@ -20,6 +20,7 @@ import org.multipaz.crypto.EcPublicKey
 import org.multipaz.crypto.Hkdf
 import org.multipaz.crypto.SignatureVerificationException
 import org.multipaz.crypto.X509CertChain
+import org.multipaz.documenttype.DocumentTypeRepository
 import org.multipaz.mdoc.credential.MdocCredential
 import org.multipaz.mdoc.devicesigned.DeviceAuth
 import org.multipaz.mdoc.devicesigned.DeviceNamespaces
@@ -128,6 +129,7 @@ data class MdocDocument(
         eReaderKey: AsymmetricKey?,
         transactionData: List<TransactionData>,
         atTime: Instant,
+        documentTypeRepository: DocumentTypeRepository = DocumentTypeRepository(),
     ): Map<String, Map<String, DataItem>> {
         // First check the issuer signature..
         val issuerAuthorityCertChain =
@@ -244,18 +246,16 @@ data class MdocDocument(
         // Check transaction data and return transaction processing responses
         return buildMap {
             for (transaction in transactionData) {
-                val response = deviceNamespaces.data[transaction.type.mdocResponseNamespace]
-                    ?: throw IllegalStateException("No transaction response for '${transaction.type.identifier}'")
-                val hashAlg = response["transaction_data_hash_alg"]?.let {
-                    Algorithm.fromCoseAlgorithmIdentifier(it.asNumber.toInt())
-                }
+                val transactionType = documentTypeRepository.getTransactionTypeByIdentifier(transaction.type)
+                    ?: throw IllegalStateException("Unknown transaction type '${transaction.type}'")
+                val response = deviceNamespaces.data[transactionType.mdocResponseNamespace]
+                    ?: throw IllegalStateException("No transaction response for '${transactionType.identifier}'")
                 val hash = response["transaction_data_hash"] as? Bstr
-                    ?: throw IllegalStateException("Invalid response for transaction '${transaction.type.identifier}'")
-                val expectedHash = transaction.getHash(hashAlg ?: Algorithm.SHA256)
-                if (ByteString(hash.asBstr) != expectedHash) {
-                    throw IllegalStateException("Transaction hash failed to verify for '${transaction.type.identifier}'")
+                    ?: throw IllegalStateException("Invalid response for transaction '${transactionType.identifier}'")
+                if (ByteString(hash.asBstr) != transaction.hash) {
+                    throw IllegalStateException("Transaction hash failed to verify for '${transactionType.identifier}'")
                 }
-                put(transaction.type.identifier, response)
+                put(transactionType.identifier, response)
             }
         }
     }

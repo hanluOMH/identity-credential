@@ -15,6 +15,7 @@ import org.multipaz.mdoc.issuersigned.IssuerNamespaces
 import org.multipaz.mdoc.request.EncryptionParameters
 import org.multipaz.mdoc.response.DeviceResponse.Companion.STATUS_OK
 import org.multipaz.mdoc.zkp.ZkDocument
+import org.multipaz.documenttype.DocumentTypeRepository
 import org.multipaz.presentment.TransactionData
 import org.multipaz.request.MdocRequestedClaim
 import kotlin.time.Clock
@@ -89,6 +90,7 @@ data class DeviceResponse internal constructor(
         eReaderKey: AsymmetricKey? = null,
         transactionDataList: List<List<TransactionData>> = emptyList(),
         atTime: Instant = Clock.System.now(),
+        documentTypeRepository: DocumentTypeRepository = DocumentTypeRepository(),
     ): List<Map<String, Map<String, DataItem>>> {
         numTimesVerifyCalled += 1
         return documents_.mapIndexed { index, document ->
@@ -98,7 +100,7 @@ data class DeviceResponse internal constructor(
                 } else {
                     emptyList()
                 }
-                document.verify(sessionTranscript, eReaderKey, transactionData, atTime)
+                document.verify(sessionTranscript, eReaderKey, transactionData, atTime, documentTypeRepository)
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 throw IllegalStateException("Error verifying document $index in DeviceResponse", e)

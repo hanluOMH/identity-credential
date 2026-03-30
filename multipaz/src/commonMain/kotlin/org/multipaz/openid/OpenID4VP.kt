@@ -430,7 +430,7 @@ object OpenID4VP {
         val dcqlQuery = DcqlQuery.fromJson(request["dcql_query"]!!.jsonObject)
         val transactionDataMap = request["transaction_data"]?.let {
             try {
-                TransactionDataJson.parse(it, source.documentTypeRepository)
+                TransactionDataJson.parse(it)
             } catch (err: IllegalArgumentException) {
                 throw IllegalStateException("Problem processing transaction(s)", err)
             }
@@ -486,6 +486,7 @@ object OpenID4VP {
                 openID4VPSdJwt(
                     version = version,
                     match = match,
+                    source = source,
                     origin = origin,
                     clientId = clientId,
                     nonce = nonce,
@@ -672,7 +673,7 @@ object OpenID4VP {
             sessionTranscript = Cbor.decode(encodedSessionTranscript),
             credential = mdocCredential,
             requestedClaims = match.source.credentialQuery.claims as List<MdocRequestedClaim>,
-            deviceNamespaces = computeTransactionResponse(match)
+            deviceNamespaces = computeTransactionResponse(match, source.documentTypeRepository)
         )
         val deviceResponse = buildDeviceResponse(
             sessionTranscript = Cbor.decode(encodedSessionTranscript),
@@ -697,6 +698,7 @@ object OpenID4VP {
     private suspend fun openID4VPSdJwt(
         version: Version,
         match: CredentialPresentmentSetOptionMemberMatch,
+        source: PresentmentSource,
         origin: String?,
         clientId: String,
         nonce: String,
@@ -714,26 +716,27 @@ object OpenID4VP {
 
         val transactionResponse = mutableMapOf<String, JsonElement>()
         for (data in match.transactionData) {
-            data.type.applyJson(data, (sdjwtVcCredential as Credential))?.let {
-                transactionResponse[data.type.kbJwtResponseClaimName] = it
+            val transactionType = source.documentTypeRepository.getTransactionTypeByIdentifier(data.type)
+                ?: throw IllegalStateException("Unknown transaction type '${data.type}'")
+            transactionType.applyJson(data, (sdjwtVcCredential as Credential))?.let {
+                transactionResponse[transactionType.kbJwtResponseClaimName] = it
             }
         }
         val hashAlgorithm = match.transactionData.firstNotNullOfOrNull {
-            it.getHashAlgorithm()
+            it.hashAlgorithm
         }
         if (hashAlgorithm != null) {
             // Non-default hash algorithm; ensure all transaction data items are
             // using the same one
             match.transactionData.forEach { data ->
-                check(hashAlgorithm == (data.getHashAlgorithm() ?: Algorithm.SHA256))
+                check(hashAlgorithm == (data.hashAlgorithm ?: Algorithm.SHA256))
             }
             transactionResponse["transaction_data_hashes_alg"] =
                 JsonPrimitive(hashAlgorithm.hashAlgorithmName)
         }
         transactionResponse["transaction_data_hashes"] = buildJsonArray {
-            match.transactionData.forEach {
-                data -> add(data.getHash(
-                    hashAlgorithm ?: Algorithm.SHA256).toByteArray().toBase64Url())
+            match.transactionData.forEach { data ->
+                add(data.hash.toByteArray().toBase64Url())
             }
         }
 

@@ -364,6 +364,7 @@ class App private constructor (val promptModel: PromptModel) {
         documentTypeRepository.addDocumentType(Loyalty.getDocumentType())
         documentTypeRepository.addDocumentType(DigitalPaymentCredential.getDocumentType())
         documentTypeRepository.addTransactionType(PingTransaction)
+        UtopiaTransactionDataTypes.registerPaymentAuthorizationTransactionType(documentTypeRepository)
     }
 
     private suspend fun documentStoreInit() {

@@ -12,8 +12,10 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
+import kotlinx.io.bytestring.ByteString
 import org.multipaz.cbor.Bstr
 import org.multipaz.cbor.Cbor
+import org.multipaz.cbor.CborMap
 import org.multipaz.cbor.DataItem
 import org.multipaz.cbor.Simple
 import org.multipaz.cbor.Tagged
@@ -32,6 +34,7 @@ import org.multipaz.cose.CoseSign1
 import org.multipaz.cose.toCoseLabel
 import org.multipaz.credential.Credential
 import org.multipaz.crypto.Algorithm
+import org.multipaz.crypto.Crypto
 import org.multipaz.crypto.SignatureVerificationException
 import org.multipaz.crypto.AsymmetricKey
 import org.multipaz.crypto.EcCurve
@@ -50,7 +53,6 @@ import org.multipaz.presentment.CredentialPresentmentSetOptionMember
 import org.multipaz.presentment.CredentialPresentmentSetOptionMemberMatch
 import org.multipaz.presentment.PresentmentSource
 import org.multipaz.presentment.TransactionData
-import org.multipaz.presentment.TransactionDataCbor
 import org.multipaz.request.MdocRequestedClaim
 import org.multipaz.request.RequestedClaim
 import org.multipaz.util.Logger
@@ -719,7 +721,9 @@ data class DeviceRequest private constructor(
                 presentmentSource.documentTypeRepository
             )
             for (transaction in transactionData) {
-                if (!transaction.type.isApplicable(transaction, cred)) {
+                val transactionType = presentmentSource.documentTypeRepository
+                    .getTransactionTypeByIdentifier(transaction.type)
+                if (transactionType == null || !transactionType.isApplicable(transaction, cred)) {
                     didNotMatch = true
                     break
                 }
@@ -746,7 +750,7 @@ data class DeviceRequest private constructor(
         return null
     }
 
-    private fun extractTransactionData(
+    private suspend fun extractTransactionData(
         requestInfo: DocRequestInfo?,
         documentTypeRepository: DocumentTypeRepository?
     ): List<TransactionData> {
@@ -763,7 +767,31 @@ data class DeviceRequest private constructor(
                 || transactionCbor.taggedItem !is Bstr) {
                 throw IllegalArgumentException("Incorrectly encoded transaction data '${knownType.identifier}'")
             }
-            list.add(TransactionDataCbor(knownType, transactionCbor))
+            val encodedBytes = transactionCbor.taggedItem.asBstr
+            val data = Cbor.decode(encodedBytes) as CborMap
+            val typeStr = data["type"].asTstr
+            val hash = Crypto.digest(Algorithm.SHA256, encodedBytes)
+            val hashAlgorithm = if (data.hasKey("transaction_data_hashes_alg")) {
+                data["transaction_data_hashes_alg"].asArray.firstNotNullOfOrNull { alg ->
+                    try {
+                        Algorithm.fromCoseAlgorithmIdentifier(alg.asNumber.toInt()).let {
+                            if (it.hashAlgorithmName != null) it else null
+                        }
+                    } catch (_: IllegalArgumentException) {
+                        null
+                    }
+                }
+            } else {
+                null
+            }
+            list.add(
+                TransactionData(
+                    hash = ByteString(hash),
+                    hashAlgorithm = hashAlgorithm,
+                    type = typeStr,
+                    cborData = data
+                )
+            )
         }
         return list.toList()
     }

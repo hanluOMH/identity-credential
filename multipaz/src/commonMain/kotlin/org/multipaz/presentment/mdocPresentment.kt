@@ -2,7 +2,7 @@ package org.multipaz.presentment
 
 import org.multipaz.cbor.DataItem
 import org.multipaz.cbor.toDataItem
-import org.multipaz.crypto.Algorithm
+import org.multipaz.documenttype.DocumentTypeRepository
 import org.multipaz.crypto.EcCurve
 import org.multipaz.crypto.EcPublicKey
 import org.multipaz.document.Document
@@ -143,7 +143,7 @@ suspend fun mdocPresentment(
                 eReaderKey = eReaderKey,
                 credential = match.credential as MdocCredential,
                 requestedClaims = match.claims.keys.toList() as List<MdocRequestedClaim>,
-                deviceNamespaces = computeTransactionResponse(match),
+                deviceNamespaces = computeTransactionResponse(match, source.documentTypeRepository),
                 errors = mapOf()
             )
             if (zkSystemMatch != null) {
@@ -173,17 +173,21 @@ suspend fun mdocPresentment(
 }
 
 internal suspend fun computeTransactionResponse(
-    match: CredentialPresentmentSetOptionMemberMatch
+    match: CredentialPresentmentSetOptionMemberMatch,
+    documentTypeRepository: DocumentTypeRepository,
 ): DeviceNamespaces {
     val transactionResponseMap = match.transactionData.associate { transaction ->
-        Pair(transaction.type.mdocResponseNamespace, buildMap {
-            val alg = transaction.getHashAlgorithm()
-            alg?.let {
-                put("transaction_data_hash_alg", it.coseAlgorithmIdentifier!!.toDataItem())
+        val transactionType = documentTypeRepository.getTransactionTypeByIdentifier(transaction.type)
+            ?: throw IllegalStateException("Unknown transaction type '${transaction.type}'")
+        Pair(transactionType.mdocResponseNamespace, buildMap<String, DataItem> {
+            transaction.hashAlgorithm?.coseAlgorithmIdentifier?.let {
+                put("transaction_data_hash_alg", it.toDataItem())
             }
-            put("transaction_data_hash",
-                transaction.getHash(alg ?: Algorithm.SHA256).toByteArray().toDataItem())
-            transaction.type.applyCbor(
+            put(
+                "transaction_data_hash",
+                transaction.hash.toByteArray().toDataItem()
+            )
+            transactionType.applyCbor(
                 transactionData = transaction,
                 credential = match.credential
             )?.let { extra ->

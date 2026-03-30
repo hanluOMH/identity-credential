@@ -17,6 +17,7 @@ import org.multipaz.mdoc.devicesigned.buildDeviceNamespaces
 import org.multipaz.mdoc.issuersigned.IssuerNamespaces
 import org.multipaz.mdoc.request.EncryptionParameters
 import org.multipaz.mdoc.zkp.ZkDocument
+import org.multipaz.documenttype.DocumentTypeRepository
 import org.multipaz.presentment.TransactionData
 import org.multipaz.request.MdocRequestedClaim
 import kotlin.time.Clock
@@ -59,7 +60,8 @@ data class EncryptedDocuments internal constructor(
         encryptionParameters: EncryptionParameters,
         sessionTranscript: DataItem,
         transactionDataList: List<List<TransactionData>> = emptyList(),
-        atTime: Instant = Clock.System.now()
+        atTime: Instant = Clock.System.now(),
+        documentTypeRepository: DocumentTypeRepository = DocumentTypeRepository(),
     ): EncryptedDocumentsPlaintext {
         val encSessionTranscript = buildCborArray {
             add(sessionTranscript.asArray[0])
@@ -88,7 +90,7 @@ data class EncryptedDocuments internal constructor(
                 } else {
                     emptyList()
                 }
-                document.verify(encSessionTranscript, null, transactionData, atTime)
+                document.verify(encSessionTranscript, null, transactionData, atTime, documentTypeRepository)
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 throw IllegalStateException("Error verifying document $index in decrypted DeviceResponse", e)
