@@ -543,34 +543,72 @@ private suspend fun processIsoMdocResponse(
         info = Cbor.encode(sessionTranscript)
     )
     val deviceResponseRaw = decrypter.decrypt(ciphertext = cipherText, aad = byteArrayOf())
-    val requestedDocuments = extractRequestedDocuments(
-        dcql = Json.parseToJsonElement(session.dcqlQuery).jsonObject
-    )
+    val dcqlJson = Json.parseToJsonElement(session.dcqlQuery).jsonObject
+    val requestedDocuments = extractRequestedDocuments(dcql = dcqlJson)
 
-    // In ISO world document ids are not used and responses rely on document index
-    // TODO: it is not clear how this would work when there are document sets.
+    // Build doctype → RequestedDocument map so we can match by doctype instead of index.
+    // The wallet may return documents in a different order than they were requested, and
+    // may omit credentials that were listed as alternatives in credential_sets.
+    val doctypeToRequest: Map<String, RequestedDocument> = buildMap {
+        val credentials = dcqlJson["credentials"] as? JsonArray ?: JsonArray(emptyList())
+        for (credentialJson in credentials) {
+            val credObj = credentialJson as? JsonObject ?: continue
+            val id = (credObj["id"] as? JsonPrimitive)?.content ?: continue
+            val doctype = (credObj["meta"] as? JsonObject)
+                ?.get("doctype_value")
+                ?.jsonPrimitive?.contentOrNull ?: continue
+            val request = requestedDocuments.find { it.id == id } ?: continue
+            put(doctype, request)
+        }
+    }
 
-    val transactionDataList = TransactionDataJson.parse(
+    // Parse transaction data keyed by credential ID (e.g. "payment").
+    // We defer building the per-document list until after orderedRequests is known so that
+    // each document receives only the transaction data that belongs to its credential ID.
+    val transactionMap = TransactionDataJson.parse(
         base64UrlEncodedJson = session.jsonTransactionData?.map {
             it.encodeToByteArray().toBase64Url()
         } ?: emptyList(),
         documentTypeRepository = documentTypeRepository
-    ).values.map { value ->
-        value.map {
+    )
+
+    // Decode the DeviceResponse DataItem once; reuse it for both doctype extraction and
+    // the actual processMdocResponse call (which would decode it again otherwise).
+    val deviceResponseDataItem = Cbor.decode(deviceResponseRaw)
+
+    // Read the docType of each returned document directly from the CBOR structure so that
+    // we can match by doctype rather than by array index.
+    val walletDocTypes: List<String?> = deviceResponseDataItem
+        .getOrNull("documents")?.asArray
+        ?.map { doc -> doc.getOrNull("docType")?.asTstr }
+        ?: emptyList()
+
+    // Build a per-document request list that follows the wallet's document order.
+    // Fall back to the first requestedDocument when a doctype is unknown (preserves
+    // existing behaviour for single-credential responses).
+    val orderedRequests: List<RequestedDocument> = walletDocTypes.map { docType ->
+        (if (docType != null) doctypeToRequest[docType] else null)
+            ?: requestedDocuments.first()
+    }
+
+    // Build transactionDataList in wallet document order, matching each document to its
+    // credential ID so that transaction data is not misassigned across documents.
+    val transactionDataList = orderedRequests.map { request ->
+        (transactionMap[request.id] ?: emptyList()).map {
             TransactionDataCbor(it.type, convertTransactionDataToCbor(it))
         }
     }
 
     val responses = processMdocResponse(
-        credentialResponse = Cbor.decode(deviceResponseRaw),
+        credentialResponse = deviceResponseDataItem,
         mdocSessionTranscript = sessionTranscript,
         eReaderKey = null,
-        documentRequests = requestedDocuments,
+        documentRequests = orderedRequests,
         transactionDataList = transactionDataList
     )
 
     return buildJsonObject {
-        for ((documentRequest, response) in requestedDocuments.zip(responses)) {
+        for ((documentRequest, response) in orderedRequests.zip(responses)) {
             put(documentRequest.id, response)
         }
     }
