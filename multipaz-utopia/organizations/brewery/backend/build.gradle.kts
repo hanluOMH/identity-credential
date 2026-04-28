@@ -10,6 +10,22 @@ application {
     mainClass.set("org.multipaz.brewery.server.Main")
 }
 
+// Runtime configuration for local/dev execution.
+// Usage example:
+//   ./gradlew multipaz-utopia:organizations:brewery:backend:run \
+//     -PbreweryBaseUrl=http://192....:8010
+val breweryBaseUrl = providers.gradleProperty("breweryBaseUrl").orNull
+
+tasks.named<JavaExec>("run") {
+    // Keep the Brewery backend on its documented port.
+    args("-param", "server_port=8010")
+
+    // Override base_url when wallet/device cannot reach localhost.
+    if (!breweryBaseUrl.isNullOrBlank()) {
+        args("-param", "base_url=$breweryBaseUrl")
+    }
+}
+
 kotlin {
     jvmToolchain(17)
 

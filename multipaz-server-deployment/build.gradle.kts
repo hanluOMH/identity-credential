@@ -1,31 +1,25 @@
 // multipaz-server-deployment/build.gradle.kts
 // Tasks for building Docker images and deployment bundles
 
-// Maps Gradle project path → short name used for the JAR file and service identity.
-// Short names must match the names used in start-servers.sh and nginx.conf.
-val serverProjects = mapOf(
-    "multipaz-verifier-server"                            to "verifier",
-    "multipaz-openid4vci-server"                          to "openid4vci",
-    "multipaz-backend-server"                             to "backend",
-    "multipaz-records-server"                             to "records",
-    "multipaz-csa-server"                                 to "csa",
-    "multipaz-utopia:organizations:brewery:backend"       to "brewery"
+val serverProjects = listOf(
+    "multipaz-verifier-server",
+    "multipaz-openid4vci-server",
+    "multipaz-backend-server",
+    "multipaz-records-server",
+    "multipaz-csa-server",
+    "multipaz-upay-server",
+    "multipaz-utopia:organizations:brewery:backend"
 )
 
 tasks.register("collectDependencies") {
     description = "Collect thin server JARs and shared dependency JARs into a staging directory"
     group = "multipaz-server-deployment"
 
-    // Depend on jar tasks for server projects plus their full runtime classpath build dependencies.
-    // Also declare the server JARs and their runtime classpaths as *inputs* so Gradle considers
-    // this task out-of-date whenever any JAR changes (without inputs the task would appear
-    // UP-TO-DATE and Docker would receive a stale staging directory).
-    for ((projectPath, _) in serverProjects) {
-        val serverProject = project(":${projectPath}")
+    // Depend on jar tasks for server projects plus their full runtime classpath build dependencies
+    for (name in serverProjects) {
+        val serverProject = project(":${name}")
         dependsOn("${serverProject.path}:jar")
         dependsOn(serverProject.configurations.getByName("runtimeClasspath").buildDependencies)
-        inputs.files(serverProject.tasks.named("jar").map { (it as Jar).archiveFile })
-        inputs.files(serverProject.configurations.named("runtimeClasspath"))
     }
 
     val stagingDir = layout.buildDirectory.dir("docker-staging")
@@ -40,11 +34,12 @@ tasks.register("collectDependencies") {
 
         // Collect all unique dependency JARs from all server projects
         val seenLibs = mutableSetOf<String>()
-        for ((projectPath, shortName) in serverProjects) {
-            val serverProject = project(":${projectPath}")
+        for (name in serverProjects) {
+            val serverProject = project(":${name}")
             val runtimeCp = serverProject.configurations.getByName("runtimeClasspath")
 
-            // Copy the thin server JAR under its short name
+            // Copy the thin server JAR
+            val shortName = name.removePrefix("multipaz-").removeSuffix("-server")
             val jarFile = serverProject.tasks.getByName<Jar>("jar").archiveFile.get().asFile
             jarFile.copyTo(File(jarsDir, "${shortName}.jar"), overwrite = true)
 
@@ -165,7 +160,7 @@ tasks.register<Exec>("runDockerImage") {
     commandLine(
         containerTool, "run",
         "--rm",
-        "-p", "8000-8009:8000-8009",
+        "-p", "8000-8010:8000-8010",
         "multipaz/server-bundle:latest"
     )
 }

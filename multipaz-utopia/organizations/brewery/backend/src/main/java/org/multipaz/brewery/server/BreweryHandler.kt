@@ -198,7 +198,7 @@ private fun buildBreweryDcqlQuery(): JsonObject = buildJsonObject {
 
 class BreweryVerifierAssistant : VerifierAssistant {
     /** Accept all requests unchanged. */
-    override suspend fun processRequest(request: JsonObject): JsonObject? = null
+    override suspend fun processRequest(request: JsonObject): VerifierAssistant.ExpandedRequest? = null
 
     /**
      * After credential verification succeeds, check age and DPC validity.
@@ -278,15 +278,20 @@ private fun findIdClaims(response: JsonObject): Pair<String, JsonObject>? {
  * Returns true if the age claims indicate the holder is 18 or older.
  *
  * Priority:
- * 1. age_over_21, age_over_18, age_above18 (Boolean)
- * 2. age_in_years (Integer >= 18)
- * 3. birth_date (ISO date string)
+ * 1. age_over_18 / age_above18 (Boolean) — definitive 18+ check
+ * 2. age_over_21 (Boolean) — true implies 18+; false does NOT mean under 18, so only used as a
+ *    positive signal when no age_over_18 claim is present
+ * 3. age_in_years (Integer >= 18)
+ * 4. birth_date (ISO date string)
  */
 private fun checkAge(claims: JsonObject): Boolean {
-    // Boolean age flags (check 21 first so we don't reject 21+ from mDL)
-    claims["age_over_21"]?.jsonPrimitive?.booleanOrNull?.let { return it }
+    // Definitive 18+ flags — check these first per the verification flow spec
     claims["age_over_18"]?.jsonPrimitive?.booleanOrNull?.let { return it }
     claims["age_above18"]?.jsonPrimitive?.booleanOrNull?.let { return it }
+
+    // age_over_21 = true implies 18+, but age_over_21 = false does NOT mean under 18
+    // (e.g. a 20-year-old has age_over_21=false yet is still over 18)
+    claims["age_over_21"]?.jsonPrimitive?.booleanOrNull?.let { if (it) return true }
 
     // Integer age
     claims["age_in_years"]?.jsonPrimitive?.intOrNull?.let { return it >= 18 }

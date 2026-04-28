@@ -69,9 +69,10 @@ object BreweryPurchaseTransaction : TransactionType(
         transactionData: TransactionData,
         credential: Credential
     ): Map<String, DataItem> = buildMap {
-        transactionData.getString("merchant")?.let    { put("merchant",     it.toDataItem()) }
-        transactionData.getString("description")?.let { put("description",  it.toDataItem()) }
-        transactionData.getString("amount")?.let      { put("amount",       it.toDataItem()) }
-        transactionData.getString("currency")?.let    { put("currency",     it.toDataItem()) }
+        val attrs = transactionData.attributes
+        attrs.getString("merchant")?.let    { put("merchant",     it.toDataItem()) }
+        attrs.getString("description")?.let { put("description",  it.toDataItem()) }
+        attrs.getString("amount")?.let      { put("amount",       it.toDataItem()) }
+        attrs.getString("currency")?.let    { put("currency",     it.toDataItem()) }
     }
 }
