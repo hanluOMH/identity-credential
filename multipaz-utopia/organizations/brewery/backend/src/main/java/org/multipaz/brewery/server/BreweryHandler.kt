@@ -118,8 +118,8 @@ private fun buildBreweryDcqlQuery(): JsonObject = buildJsonObject {
                 add(claim("age_over_18",  "org.iso.18013.5.1", "age_over_18"))
             })
             put("claim_sets", buildJsonArray {
-                add(buildJsonArray { add(js("age_over_21")) })
                 add(buildJsonArray { add(js("age_over_18")) })
+                add(buildJsonArray { add(js("age_over_21")) })
                 add(buildJsonArray { add(js("age_in_years")) })
                 add(buildJsonArray { add(js("birth_date")) })
             })
@@ -138,8 +138,8 @@ private fun buildBreweryDcqlQuery(): JsonObject = buildJsonObject {
                 add(claim("age_over_18",  "eu.europa.ec.eudi.pid.1", "age_over_18"))
             })
             put("claim_sets", buildJsonArray {
-                add(buildJsonArray { add(js("age_over_21")) })
                 add(buildJsonArray { add(js("age_over_18")) })
+                add(buildJsonArray { add(js("age_over_21")) })
                 add(buildJsonArray { add(js("age_in_years")) })
                 add(buildJsonArray { add(js("birth_date")) })
             })
@@ -284,7 +284,7 @@ private fun findIdClaims(response: JsonObject): Pair<String, JsonObject>? {
  * 3. age_in_years (Integer >= 18)
  * 4. birth_date (ISO date string)
  */
-private fun checkAge(claims: JsonObject): Boolean {
+fun checkAge(claims: JsonObject): Boolean {
     // Definitive 18+ flags — check these first per the verification flow spec
     claims["age_over_18"]?.jsonPrimitive?.booleanOrNull?.let { return it }
     claims["age_above18"]?.jsonPrimitive?.booleanOrNull?.let { return it }
