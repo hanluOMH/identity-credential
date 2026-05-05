@@ -33,6 +33,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
 import org.multipaz.asn1.OID
+import org.multipaz.cbor.DataItem
 import org.multipaz.crypto.Algorithm
 import org.multipaz.crypto.AsymmetricKey
 import org.multipaz.crypto.Crypto
@@ -42,6 +43,8 @@ import org.multipaz.openid4vci.credential.CredentialFactoryDigitalPaymentCredent
 import org.multipaz.openid4vci.credential.CredentialFactoryMdl
 import org.multipaz.openid4vci.credential.CredentialFactoryRegistry
 import org.multipaz.openid4vci.credential.CredentialFactoryUtopiaNaturalization
+import org.multipaz.openid4vci.customization.IssuanceObserver
+import org.multipaz.openid4vci.util.CredentialId
 import org.multipaz.provisioning.AuthorizationChallenge
 import org.multipaz.provisioning.AuthorizationResponse
 import org.multipaz.provisioning.KeyBindingInfo
@@ -164,13 +167,32 @@ class ProvisioningClientTest {
         )
     }
 
+    @Test
+    fun issuanceObserverCalledOnceForMintedCredential() {
+        val observer = RecordingIssuanceObserver()
+        runWithAuthorizationCode(
+            offer = OFFER_PAYMENT,
+            serverArgs = arrayOf(
+                "-param", "base_url=http://localhost",
+                "-param", "database_engine=ephemeral",
+                "-param", "use_scopes=true"
+            ),
+            issuanceObserver = observer,
+        )
+
+        Assert.assertEquals(listOf("payment_sca_mdoc"), observer.configurationIds)
+        Assert.assertEquals(1, observer.credentialIds.size)
+    }
+
     fun runWithAuthorizationCode(
         offer: String,
-        serverArgs: Array<String>
+        serverArgs: Array<String>,
+        issuanceObserver: IssuanceObserver? = null,
     ) = testApplication {
         val configuration = ServerConfiguration(serverArgs)
         val serverEnvironment = ServerEnvironment.create(configuration) {
             add(CredentialFactoryRegistry::class, credentalFactoryRegistry)
+            issuanceObserver?.let { add(IssuanceObserver::class, it) }
         }
         application {
             installServerEnvironment(serverEnvironment)
@@ -345,6 +367,20 @@ class ProvisioningClientTest {
             }
             // Exception is thrown because key could not be found
             assertIs<IllegalArgumentException>(exception)
+        }
+    }
+
+    class RecordingIssuanceObserver : IssuanceObserver {
+        val credentialIds = mutableListOf<CredentialId>()
+        val configurationIds = mutableListOf<String>()
+
+        override suspend fun onIssued(
+            systemOfRecordData: DataItem,
+            credentialId: CredentialId,
+            configurationId: String,
+        ) {
+            credentialIds.add(credentialId)
+            configurationIds.add(configurationId)
         }
     }
 

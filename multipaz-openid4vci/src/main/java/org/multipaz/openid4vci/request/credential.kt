@@ -43,6 +43,7 @@ import org.multipaz.crypto.X509CertChain
 import org.multipaz.openid4vci.credential.CredentialDisplay
 import org.multipaz.webtoken.ChallengeInvalidException
 import org.multipaz.openid4vci.credential.CredentialFactoryRegistry
+import org.multipaz.openid4vci.customization.IssuanceObserver
 import org.multipaz.openid4vci.customization.NonceManager
 import org.multipaz.openid4vci.util.IssuanceState
 import org.multipaz.openid4vci.util.OpaqueIdType
@@ -124,6 +125,11 @@ suspend fun credential(call: ApplicationCall) {
             expiration = minted.expiration
         )
         CredentialState.updateCredential(credentialId, credentialState)
+        IssuanceObserver.notifyIssued(
+            systemOfRecordData = credentialData,
+            credentialId = credentialId,
+            configurationId = factory.configurationId,
+        )
         state.credentials.add(IssuanceState.CredentialData(
             bucket = credentialId.bucket,
             index = credentialId.index,
@@ -287,6 +293,11 @@ suspend fun credential(call: ApplicationCall) {
             expiration = minted.expiration
         )
         CredentialState.updateCredential(credentialId, credentialState)
+        IssuanceObserver.notifyIssued(
+            systemOfRecordData = credentialData,
+            credentialId = credentialId,
+            configurationId = factory.configurationId,
+        )
         state.credentials.add(IssuanceState.CredentialData(
             bucket = credentialId.bucket,
             index = credentialId.index,
