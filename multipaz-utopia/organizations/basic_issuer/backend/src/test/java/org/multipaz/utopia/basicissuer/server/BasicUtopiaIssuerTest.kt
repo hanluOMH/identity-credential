@@ -16,6 +16,7 @@ import org.multipaz.documenttype.DocumentTypeRepository
 import org.multipaz.documenttype.knowntypes.DrivingLicense
 import org.multipaz.openid4vci.credential.CredentialFactoryRegistry
 import org.multipaz.openid4vci.customization.IssuanceObserver
+import org.multipaz.openid4vci.server.addUtopiaIssuer
 import org.multipaz.openid4vci.server.configureRouting
 import org.multipaz.rpc.backend.Configuration
 import org.multipaz.server.common.ServerConfiguration
