@@ -21,6 +21,7 @@ Each organization under `organizations/` is a standalone demo that showcases a r
 
 | Organization | Description | README |
 |---|---|---|
+| **Basic Issuer** | Composition-based OpenID4VCI issuer for Basic Utopia credentials | [organizations/basic_issuer/PLAN.md](organizations/basic_issuer/PLAN.md) |
 | **Brewery** | Age-verified e-commerce checkout using mDL / eID credentials | [organizations/brewery/README.md](organizations/brewery/README.md) |
 
 ## Shared Known Types
