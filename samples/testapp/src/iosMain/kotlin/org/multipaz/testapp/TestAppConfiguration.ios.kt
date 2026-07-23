@@ -22,6 +22,7 @@ import org.multipaz.document.DocumentBadge
 import org.multipaz.presentment.PresentmentSource
 import org.multipaz.storage.Storage
 import org.multipaz.storage.ios.IosStorage
+import platform.Foundation.NSBundle
 import platform.Foundation.NSFileManager
 import platform.darwin.freeifaddrs
 import platform.darwin.getifaddrs
@@ -34,6 +35,11 @@ import platform.posix.INET_ADDRSTRLEN
 import platform.posix.sa_family_t
 import platform.posix.sockaddr_in
 import platform.posix.sockaddr_in6
+
+private const val DOCUMENT_PROVIDER_EXTENSION_SUFFIX = ".IdentityDocumentProviderExtension"
+private const val LEGACY_DOCUMENT_PROVIDER_EXTENSION_SUFFIX = ".DocumentProviderExtension"
+private const val STORAGE_APP_GROUP_SUFFIX = ".sharedgroup"
+private const val STORAGE_FILE_NAME = "storageNoBackup.db"
 
 actual object TestAppConfiguration {
 
@@ -50,8 +56,8 @@ actual object TestAppConfiguration {
     )
     actual val storage: Storage = IosStorage(
         storageFileUrl = NSFileManager.defaultManager.containerURLForSecurityApplicationGroupIdentifier(
-            groupIdentifier = "group.org.multipaz.testapp.sharedgroup"
-        )!!.URLByAppendingPathComponent("storageNoBackup.db")!!,
+            groupIdentifier = storageApplicationGroupIdentifier()
+        )!!.URLByAppendingPathComponent(STORAGE_FILE_NAME)!!,
         excludeFromBackup = true
     )
 
@@ -131,4 +137,14 @@ actual object TestAppConfiguration {
     ) {
         throw NotImplementedError("Not implemented on this platform")
     }
+}
+
+@OptIn(ExperimentalForeignApi::class)
+private fun storageApplicationGroupIdentifier(): String {
+    val bundleIdentifier = NSBundle.mainBundle.bundleIdentifier
+        ?: throw IllegalStateException("Unable to determine bundle identifier")
+    val appBundleIdentifier = bundleIdentifier
+        .removeSuffix(DOCUMENT_PROVIDER_EXTENSION_SUFFIX)
+        .removeSuffix(LEGACY_DOCUMENT_PROVIDER_EXTENSION_SUFFIX)
+    return "group.$appBundleIdentifier$STORAGE_APP_GROUP_SUFFIX"
 }
